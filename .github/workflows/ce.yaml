@@ -54,6 +54,8 @@ jobs:
 
       - name: Print ROC logs
         run: |
+          echo "Sleep 10"
+          sleep 10
           echo "Fetching ROC container logs..."
           docker logs roc-test || true
 
