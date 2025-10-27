@@ -42,7 +42,7 @@ jobs:
             hanshal785/roc:vm \
             --server-url https://api.codexsecurity.io \
             --api-key dummyapikey1234567890 \
-            --patterns /roc-config/pattern.yaml \
+            --patterns /tmp/roc-config/pattern.yaml \
             --watch /tmp/roc-output
 
       - name: Simulate curl traffic
