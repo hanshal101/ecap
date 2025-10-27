@@ -38,7 +38,7 @@ jobs:
             -v /lib:/lib:ro \
             -v /usr/lib:/usr/lib:ro \
             -v ${{ github.workspace }}/roc-output:/tmp/roc-output \
-            -v ${{ github.workspace }}/roc-config:/roc-config:ro \
+            -v ${{ github.workspace }}/roc-config:/tmp/roc-config:ro \
             hanshal785/roc:vm \
             --server-url https://api.codexsecurity.io \
             --api-key dummyapikey1234567890 \
