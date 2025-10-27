@@ -15,8 +15,8 @@ jobs:
 
       - name: Prepare config file
         run: |
-          mkdir -p /tmp/roc-output /tmp/roc-config
-          cat <<'EOF' > /tmp/roc-config/pattern.yaml
+          mkdir -p ./roc-config ./roc-output
+          cat <<'EOF' > ./roc-config/pattern.yaml
           patterns:
             - id: "api_key"
               regex: "(?i)api[_-]?key\\s*[:=]\\s*[A-Za-z0-9\\-_]{16,}"
@@ -25,13 +25,10 @@ jobs:
             - id: "email"
               regex: "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"
           EOF
-
-          echo "Pattern file written at /tmp/roc-config/pattern.yaml"
-          ls -l /tmp/roc-config/
+          ls -l ./roc-config/
 
       - name: Run ROC container (privileged)
         run: |
-          echo "Starting ROC privileged container..."
           docker run -d --name roc-test \
             --privileged \
             --pid=host \
@@ -40,8 +37,8 @@ jobs:
             -v /sys:/sys \
             -v /lib:/lib:ro \
             -v /usr/lib:/usr/lib:ro \
-            -v /tmp/roc-output:/tmp/roc-output \
-            -v /tmp/roc-config:/roc-config:ro \
+            -v ${{ github.workspace }}/roc-output:/tmp/roc-output \
+            -v ${{ github.workspace }}/roc-config:/roc-config:ro \
             hanshal785/roc:vm \
             --server-url https://api.codexsecurity.io \
             --api-key dummyapikey1234567890 \
