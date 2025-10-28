@@ -27,23 +27,13 @@ jobs:
           EOF
           ls -l ./roc-config/
 
-      - name: Run ROC container (privileged)
+      - name: Run eCapture binary
         run: |
-          docker run -d --name roc-test \
-            --privileged \
-            --pid=host \
-            --network=host \
-            -v /proc:/proc \
-            -v /sys:/sys \
-            -v /lib:/lib:ro \
-            -v /usr/lib:/usr/lib:ro \
-            -v ${{ github.workspace }}/roc-output:/tmp/roc-output \
-            -v ${{ github.workspace }}/roc-config:/tmp/roc-config:ro \
-            hanshal785/roc:vm \
-            --server-url https://api.codexsecurity.io \
-            --api-key dummyapikey1234567890 \
-            --patterns /tmp/roc-config/pattern.yaml \
-            --watch /tmp/roc-output
+          echo "Starting eCapture in background..."
+          chmod +x ./ecapture
+          ./ecapture tls -m pcapng -i eth0 -w /tmp/roc-output --rotation-interval 1m "(tcp port 80 or tcp port 443)" > ecapture.log 2>&1 &
+          echo "Waiting 10 seconds before generating traffic..."
+          sleep 10
 
       - name: Simulate curl traffic
         run: |
@@ -52,15 +42,17 @@ jobs:
           curl -s -X POST https://httpbin.org/post -d '{"roc":"test"}' \
             -H "Content-Type: application/json" > /dev/null || true
 
-      - name: Print ROC logs
+      - name: Print eCapture logs
         run: |
-          echo "Sleep 70"
-          sleep 70
-          echo "Fetching ROC container logs..."
-          docker logs roc-test || true
+          echo "Sleeping for 10 seconds to allow capture to process..."
+          sleep 10
+          echo "Printing eCapture logs..."
+          cat ecapture.log || true
+          echo "Listing output directory..."
+          ls -l /tmp/roc-output || true
 
       - name: Cleanup
         if: always()
         run: |
-          docker rm -f roc-test || true
-          rm -rf /tmp/roc-output /tmp/roc-config
+          pkill -f ecapture || true
+          rm -rf /tmp/roc-output ./roc-config ecapture.log
