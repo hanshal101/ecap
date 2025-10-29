@@ -26,33 +26,37 @@ jobs:
               regex: "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"
           EOF
           ls -l ./roc-config/
-
-      - name: Run eCapture binary
+      - name: Run ROC container (privileged)
         run: |
-          echo "Starting eCapture in background..."
-          chmod +x ./ecapture
-          sudo ./ecapture tls -m pcapng -i eth0 -w /tmp/roc-output --rotation-interval 1m "(tcp port 80 or tcp port 443)" > ecapture.log 2>&1 &
-          echo "Waiting 10 seconds before generating traffic..."
-          sleep 10
-
+          docker run -d --name roc-test \
+            --privileged \
+            --pid=host \
+            --network=host \
+            -v /proc:/proc \
+            -v /sys:/sys \
+            -v /usr/lib/x86_64-linux-gnu/libssl.so.3:/usr/lib/x86_64-linux-gnu/libssl.so.3 \
+            -v /usr/lib/x86_64-linux-gnu/libcrypto.so.3:/usr/lib/x86_64-linux-gnu/libcrypto.so.3 \
+            -v ${{ github.workspace }}/roc-output:/tmp/roc-output \
+            -v ${{ github.workspace }}/roc-config:/tmp/roc-config:ro \
+            hanshal785/roc:vm \
+            --server-url https://api.codexsecurity.io \
+            --api-key dummyapikey1234567890 \
+            --patterns /tmp/roc-config/pattern.yaml \
+            --watch /tmp/roc-output
       - name: Simulate curl traffic
         run: |
           echo "Generating curl traffic..."
           curl -s https://example.com > /dev/null || true
           curl -s -X POST https://httpbin.org/post -d '{"roc":"test"}' \
             -H "Content-Type: application/json" > /dev/null || true
-
-      - name: Print eCapture logs
+      - name: Print ROC logs
         run: |
-          echo "Sleeping for 10 seconds to allow capture to process..."
-          sleep 10
-          echo "Printing eCapture logs..."
-          cat ecapture.log || true
-          echo "Listing output directory..."
-          ls -l /tmp/roc-output || true
-
+          echo "Sleep 70"
+          sleep 70
+          echo "Fetching ROC container logs..."
+          docker logs roc-test || true
       - name: Cleanup
         if: always()
         run: |
-          pkill -f ecapture || true
-          rm -rf /tmp/roc-output ./roc-config ecapture.log
+          docker rm -f roc-test || true
+          rm -rf /tmp/roc-output /tmp/roc-config
