@@ -55,6 +55,8 @@ jobs:
           sleep 70
           echo "Fetching ROC container logs..."
           docker logs roc-test || true
+          sleep 5
+          cat /tmp/roc-output/secrets_*.json
       - name: Cleanup
         if: always()
         run: |
