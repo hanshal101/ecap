@@ -43,7 +43,7 @@ jobs:
             --api-key dummyapikey1234567890 \
             --patterns /tmp/roc-config/pattern.yaml \
             --watch /tmp/roc-output
-            --interface eth0
+           
           sleep 20
       - name: Simulate curl traffic
         run: |
