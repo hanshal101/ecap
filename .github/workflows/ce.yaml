@@ -47,9 +47,7 @@ jobs:
         run: |
           ldd $(which curl)
           echo "Generating curl traffic..."
-          curl -s https://example.com > /dev/null || true
-          curl -s -X POST https://httpbin.org/post -d '{"roc":"test"}' \
-            -H "Content-Type: application/json" > /dev/null || true
+          curl -X POST https://example.com   -H "Content-Type: application/json"   -d '{"key":"value"}'
       - name: Print ROC logs
         run: |
           echo "Sleep 70"
