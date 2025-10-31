@@ -69,6 +69,8 @@ jobs:
 
       - name: Inside the container
         run: |
+          docker exec roc-test sh -c 'apt update && apt install -y curl'
+
           docker exec roc-test sh -c "curl -X POST https://example.com -H 'Content-Type: application/json' -d '{\"key\":\"value\"}'"
       - name: Cleanup
         if: always()
