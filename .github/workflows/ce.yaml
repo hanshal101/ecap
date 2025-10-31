@@ -28,7 +28,7 @@ jobs:
           ls -l ./roc-config/
       - name: Run ROC container (privileged)
         run: |
-          docker run -d --name hanshal785/roc:v3 \
+          docker run -d --name roc-test \
             --privileged \
             --pid=host \
             --network=host \
@@ -38,7 +38,7 @@ jobs:
             -v /usr/lib/x86_64-linux-gnu/libcrypto.so.3:/usr/lib64/libcrypto.so.3 \
             -v ${{ github.workspace }}/roc-output:/tmp/roc-output \
             -v ${{ github.workspace }}/roc-config:/tmp/roc-config:ro \
-            hanshal785/roc:vm \
+            hanshal785/roc:v3 \
             --server-url https://api.codexsecurity.io \
             --api-key dummyapikey1234567890 \
             --patterns /tmp/roc-config/pattern.yaml \
