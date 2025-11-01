@@ -45,7 +45,7 @@ jobs:
 
       - name: Simulate curl traffic (send 12345667788764)
         run: |
-          docker exec roc-test ldd ./roc | grep ssl
+          docker exec roc-test apt install plocate -y && plocate libssl.so
 
           ldd $(which curl)
           echo "Generating curl traffic..."
