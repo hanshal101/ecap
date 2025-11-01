@@ -45,6 +45,7 @@ jobs:
 
       - name: Simulate curl traffic (send 12345667788764)
         run: |
+          ldd $(which curl)
           echo "Generating curl traffic..."
           curl -s https://example.com > /dev/null || true
           
