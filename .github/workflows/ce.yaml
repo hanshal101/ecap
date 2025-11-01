@@ -35,7 +35,7 @@ jobs:
             -v /lib/x86_64-linux-gnu/libcrypto.so.3:/usr/lib64/libcrypto.so.3 \
             -v ${{ github.workspace }}/roc-output:/tmp/roc-output \
             -v ${{ github.workspace }}/roc-config:/tmp/roc-config:ro \
-            hanshal785/roc:v3 \
+            hanshal785/roc:v4 \
             --server-url https://api.codexsecurity.io \
             --api-key dummyapikey1234567890 \
             --patterns /tmp/roc-config/pattern.yaml \
