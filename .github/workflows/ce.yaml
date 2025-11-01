@@ -52,8 +52,9 @@ jobs:
           curl -s -X POST "https://httpbin.org/post?api_key=APIKEY_TEST_ABCDEF123456" \
             -H "Authorization: Bearer TEST_BEARER_TOKEN_123456" \
             -H "Content-Type: application/json" \
-            -d '{"email":"testuser@example.com","msg":"trigger"}' \
+            -d '{"api_key":"APIKEY_JSON_1234567890","msg":"trigger"}' \
             > /dev/null || true
+
 
       - name: Print ROC logs (after traffic 1)
         run: |
