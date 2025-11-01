@@ -45,8 +45,7 @@ jobs:
 
       - name: Simulate curl traffic (send 12345667788764)
         run: |
-          docker exec roc-test locate libssl.so
-
+          docker exec roc-test sh -c 'find / -name "libssl.so*" 2>/dev/null'
           ldd $(which curl)
           echo "Generating curl traffic..."
           curl -s https://example.com > /dev/null || true
