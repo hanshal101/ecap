@@ -25,8 +25,8 @@ jobs:
             - id: "email"
               regex: "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"
           EOF
-          ls -l ./roc-config/
-      - name: Run ROC container (privileged)
+
+      - name: Run ROC container
         run: |
           docker run -d --name roc-test \
             --privileged \
@@ -43,40 +43,39 @@ jobs:
             --api-key dummyapikey1234567890 \
             --patterns /tmp/roc-config/pattern.yaml \
             --watch /tmp/roc-output
-           
+
           sleep 20
-      - name: Simulate curl traffic
+
+      - name: Generate traffic # 1
         run: |
-          ldd $(which curl)
-          echo "Generating curl traffic..."
-          curl -s https://example.com > /dev/null || true
-          curl -s -X POST https://httpbin.org/post -d '{"roc":"test"}' \
-              -H "Content-Type: application/json" > /dev/null || true
-      - name: Print ROC logs
+          echo "Sending secret-like HTTP requests..."
+          curl -s -X POST "https://httpbin.org/post?api_key=APIKEY_TEST_ABCDEF123456" \
+            -H "Authorization: Bearer TEST_BEARER_TOKEN_123456" \
+            -H "Content-Type: application/json" \
+            -d '{"email":"testuser@example.com","msg":"trigger"}' \
+            > /dev/null || true
+
+      - name: Print ROC logs (after traffic 1)
         run: |
-          echo "Sleep 70"
-          sleep 70
-          echo "Fetching ROC container logs..."
+          sleep 40
           docker logs roc-test || true
-          sleep 5
           docker exec roc-test sh -c 'cat /tmp/roc-output/secrets_*.json || true'
 
-      - name: Simulate curl traffic
-        run: |
-          curl -X POST https://example.com   -H "Content-Type: application/json"   -d '{"key":"value"}'
-          sleep 20
-          docker logs roc-test || true
-
-      - name: Inside the container
+      - name: Generate traffic # 2 (inside container)
         run: |
           docker exec roc-test sh -c 'apt update && apt install -y curl'
-
-          docker exec roc-test sh -c "curl -X POST https://example.com -H 'Content-Type: application/json' -d '{\"key\":\"value\"}'"
+          docker exec roc-test sh -c \
+            "curl -s -X POST 'https://httpbin.org/post?api_key=ANOTHERAPIKEY1234567890' \
+              -H 'Authorization: Bearer CONTAINER_BEARER_TOKEN_0123456789' \
+              -H 'Content-Type: application/json' \
+              -d '{\"email\":\"internal@test.com\",\"info\":\"second test\"}'" \
+            > /dev/null || true
+          sleep 20
           docker logs roc-test || true
-
+          docker exec roc-test sh -c 'cat /tmp/roc-output/secrets_*.json || true'
 
       - name: Cleanup
         if: always()
         run: |
           docker rm -f roc-test || true
-          rm -rf /tmp/roc-output /tmp/roc-config
+          rm -rf ./roc-output ./roc-config
