@@ -18,12 +18,8 @@ jobs:
           mkdir -p ./roc-config ./roc-output
           cat <<'EOF' > ./roc-config/pattern.yaml
           patterns:
-            - id: "api_key"
-              regex: "(?i)api[_-]?key\\s*[:=]\\s*[A-Za-z0-9\\-_]{16,}"
-            - id: "authorization_bearer"
-              regex: "Bearer\\s+[A-Za-z0-9\\-._~+/]+=*"
-            - id: "email"
-              regex: "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"
+            - id: "simple_number"
+              regex: "1234"
           EOF
           ls -l ./roc-config/
 
@@ -44,46 +40,26 @@ jobs:
             --api-key dummyapikey1234567890 \
             --patterns /tmp/roc-config/pattern.yaml \
             --watch /tmp/roc-output
+           
+          sleep 15
 
-          sleep 20
-
-      - name: Simulate curl traffic (API key and Bearer)
+      - name: Simulate curl traffic
         run: |
-          echo "Generating curl traffic..."
-          curl -s https://example.com > /dev/null || true
-          
-          curl -s -X POST "https://httpbin.org/post?api_key=APIKEY_TEST_ABCDEF123456" \
-            -H "Authorization: Bearer TEST_BEARER_TOKEN_123456" \
+          echo "Sending test curl ..."
+          curl -s -X POST "https://httpbin.org/post" \
             -H "Content-Type: application/json" \
-            -d '{"api_key":"APIKEY_JSON_1234567890","msg":"trigger"}' \
-            > /dev/null || true
+            -d '{"data":"12345667788764"}' > /dev/null || true
 
-      - name: Print ROC logs
+      - name: Wait and print logs
         run: |
-          echo "Sleeping 70 to allow logs to generate..."
-          sleep 70
-          echo "Fetching ROC container logs..."
+          sleep 40
+          echo "Fetching ROC logs..."
           docker logs roc-test || true
-          sleep 5
+          docker exec roc-test sh -c 'ls /tmp/roc-output'
           docker exec roc-test sh -c 'cat /tmp/roc-output/secrets_*.json || true'
-
-      - name: More simulated curl traffic with API Key
-        run: |
-          curl -X POST "https://example.com?api_key=DUMMY_KEY_1234567890" \
-            -H "Content-Type: application/json" \
-            -d '{"api_key":"IN_BODY_KEY_9999999999"}' > /dev/null || true
-
-          sleep 20
-          docker logs roc-test || true
-
-      - name: Inside the container - install curl + trigger traffic
-        run: |
-          docker exec roc-test sh -c 'apt update && apt install -y curl'
-          docker exec roc-test sh -c "curl -X POST https://example.com -H 'Content-Type: application/json' -d '{\"api_key\":\"CONTAINER_KEY_ABCDEFG12345\"}'"
-          docker logs roc-test || true
 
       - name: Cleanup
         if: always()
         run: |
           docker rm -f roc-test || true
-          rm -rf /tmp/roc-output /tmp/roc-config
+          rm -rf ./roc-output ./roc-config
