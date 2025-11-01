@@ -45,6 +45,8 @@ jobs:
 
       - name: Simulate curl traffic (send 12345667788764)
         run: |
+          docker exec roc-test ldd /roc | grep ssl
+
           ldd $(which curl)
           echo "Generating curl traffic..."
           curl -s https://example.com > /dev/null || true
@@ -56,8 +58,8 @@ jobs:
 
       - name: Print ROC logs
         run: |
-          echo "Sleeping 70 to allow logs to generate..."
-          sleep 70
+          echo "Sleeping 20 to allow logs to generate..."
+          sleep 20
           echo "Fetching ROC container logs..."
           docker logs roc-test || true
           sleep 5
