@@ -1,4 +1,4 @@
-name: Run ROC Sensor in GitHub Actions
+name: Run ROC Sensor Without Docker
 
 on:
   workflow_dispatch:
@@ -13,7 +13,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Prepare config file
+      - name: Verify ROC binary exists and make executable
+        run: |
+          ls -l .
+          chmod +x ./roc
+          echo "ROC binary ready."
+
+      - name: Prepare config + output folders
         run: |
           mkdir -p ./roc-config ./roc-output
           cat <<'EOF' > ./roc-config/pattern.yaml
@@ -23,64 +29,60 @@ jobs:
           EOF
           ls -l ./roc-config/
 
-      - name: Run ROC container (privileged)
+      - name: Start ROC in background
         run: |
-          docker run -d --name roc-test \
-            --privileged \
-            --pid=host \
-            --network=host \
-            -v /proc:/proc \
-            -v /sys:/sys \
-            -v /lib/x86_64-linux-gnu/libssl.so.3:/usr/lib/x86_64-linux-gnu/libssl.so.3 \
-            -v /lib/x86_64-linux-gnu/libcrypto.so.3:/usr/lib/x86_64-linux-gnu/libcrypto.so.3 \
-            -v ${{ github.workspace }}/roc-output:/tmp/roc-output \
-            -v ${{ github.workspace }}/roc-config:/tmp/roc-config:ro \
-            hanshal785/roc:v4 \
+          echo "Starting ROC..."
+          ./roc \
             --server-url https://api.codexsecurity.io \
             --api-key dummyapikey1234567890 \
-            --patterns /tmp/roc-config/pattern.yaml \
-            --watch /tmp/roc-output
-
-          sleep 20
-
-      - name: Simulate curl traffic (send 12345667788764)
-        run: |
-          docker exec roc-test sh -c 'find / -name "libssl.so*" 2>/dev/null'
-          ldd $(which curl)
-          echo "Generating curl traffic..."
-          curl -s https://example.com > /dev/null || true
+            --patterns ./roc-config/pattern.yaml \
+            --watch ./roc-output \
+            > roc.log 2>&1 &
           
+          sleep 10
+          echo "ROC started."
+
+      - name: Trigger HTTP traffic containing target strings
+        run: |
+          echo "Generating HTTP traffic..."
+          curl -s https://example.com > /dev/null || true
+
           curl -s -X POST "https://httpbin.org/post?test=12345667788764" \
             -H "Content-Type: application/json" \
             -d '{"data":"12345667788764"}' \
             > /dev/null || true
 
-      - name: Print ROC logs
+      - name: Print ROC logs + output
         run: |
-          echo "Sleeping 20 to allow logs to generate..."
-          sleep 20
-          echo "Fetching ROC container logs..."
-          docker logs roc-test || true
-          sleep 5
-          docker exec roc-test sh -c 'cat /tmp/roc-output/secrets_*.json || true'
+          echo "Sleeping 15 seconds for ROC to process..."
+          sleep 15
+          echo "=== ROC Log Output ==="
+          cat roc.log || true
+          echo "=== ROC Findings Output ==="
+          ls -l ./roc-output || true
+          cat ./roc-output/secrets_*.json || true
 
-      - name: More simulated curl traffic with 12345667788764
+      - name: More simulated curl traffic
         run: |
           curl -X POST "https://example.com?more=12345667788764" \
             -H "Content-Type: application/json" \
             -d '{"info":"12345667788764"}' > /dev/null || true
 
-          sleep 20
-          docker logs roc-test || true
+          sleep 15
+          echo "=== Updated ROC Logs ==="
+          cat roc.log || true
 
-      - name: Inside the container - install curl + trigger 12345667788764
+      - name: Another curl request (runner itself)
         run: |
-          docker exec roc-test sh -c 'apt update && apt install -y curl'
-          docker exec roc-test sh -c "curl -X POST https://example.com -H 'Content-Type: application/json' -d '{\"inside\":\"12345667788764\"}'"
-          docker logs roc-test || true
+          curl -X POST https://example.com \
+            -H 'Content-Type: application/json' \
+            -d '{"inside":"12345667788764"}'
+          sleep 10
+          cat roc.log || true
 
       - name: Cleanup
         if: always()
         run: |
-          docker rm -f roc-test || true
-          rm -rf /tmp/roc-output /tmp/roc-config
+          echo "Cleaning up..."
+          pkill roc || true
+          rm -rf ./roc-config ./roc-output roc.log
