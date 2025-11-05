@@ -1,92 +1,78 @@
-name: Run ROC Sensor Without Docker
+name: Run ROC Sensor in GitHub Actions
 
 on:
-  workflow_dispatch:
+    workflow_dispatch:
 
 jobs:
-  run-roc:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    run-roc:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
 
-      - name: Verify ROC binary exists and make executable
-        run: |
-          echo "Checking repo contents..."
-          ls -l
-          chmod +x ./roc
-          echo "ROC binary is ready."
+            - name: Prepare config file
+              run: |
+                  mkdir -p ./roc-config ./roc-output
+                  cat <<'EOF' > ./roc-config/pattern.yaml
+                  patterns:
+                    - id: "simple_number"
+                      regex: "1234"
+                  EOF
+                  ls -l ./roc-config/
+            - name: Run ROC container (privileged)
+              run: |
+                  docker run -d --name roc-test \
+                    --privileged \
+                    --pid=host \
+                    --network=host \
+                    -v /proc:/proc \
+                    -v /sys:/sys \
+                    -v /lib/x86_64-linux-gnu/libssl.so.3:/usr/lib64/libssl.so.3 \
+                    -v /lib/x86_64-linux-gnu/libcrypto.so.3:/usr/lib64/libcrypto.so.3 \
+                    -v ${{ github.workspace }}/roc-output:/tmp/roc-output \
+                    -v ${{ github.workspace }}/roc-config:/tmp/roc-config:ro \
+                    hanshal785/roc:v4 \
+                    --server-url https://api.codexsecurity.io \
+                    --api-key dummyapikey1234567890 \
+                    --patterns /tmp/roc-config/pattern.yaml \
+                    --watch /tmp/roc-output
+                  sleep 20
+            - name: Simulate curl traffic (send 12345667788764)
+              run: |
+                  docker exec roc-test sh -c 'find / -name "libssl.so*" 2>/dev/null'
+                  ldd $(which curl)
+                  echo "Generating curl traffic..."
+                  curl -s https://example.com > /dev/null || true
 
-      - name: Install dependencies (libpcap + ssl)
-        run: |
-          echo "Installing system libraries..."
-          sudo apt-get update
-          sudo apt-get install -y libpcap0.8 libssl3 || sudo apt-get install -y libpcap0.8 libssl1.1
-          echo "Installed dependencies:"
-          ldconfig -p | grep -E "pcap|ssl" || true
-
-      - name: Prepare config + output folders
-        run: |
-          mkdir -p ./roc-config ./roc-output
-          cat <<'EOF' > ./roc-config/pattern.yaml
-          patterns:
-            - id: "simple_number"
-              regex: "1234"
-          EOF
-
-      - name: Start ROC in background
-        run: |
-          echo "Starting ROC..."
-          sudo ./roc \
-            --server-url https://api.codexsecurity.io \
-            --api-key dummyapikey1234567890 \
-            --patterns ./roc-config/pattern.yaml \
-            --watch ./roc-output \
-            > roc.log 2>&1 &
-
-          sleep 10
-          echo "ROC started."
-
-      - name: Trigger HTTP traffic (containing secret-like string)
-        run: |
-          echo "Simulating network traffic..."
-          curl -s https://example.com > /dev/null || true
-
-          curl -s -X POST "https://httpbin.org/post?test=12345667788764" \
-            -H "Content-Type: application/json" \
-            -d '{"data":"12345667788764"}' \
-            > /dev/null || true
-
-      - name: Print ROC logs and output
-        run: |
-          echo "Waiting for ROC to process data..."
-          sleep 15
-
-          echo "=== ROC Log Output ==="
-          cat roc.log || true
-
-          echo "=== ROC Output Directory ==="
-          ls -l ./roc-output || true
-
-          echo "=== ROC Detected Secrets ==="
-          cat ./roc-output/secrets_*.json || echo "No findings yet"
-
-      - name: More simulated curl traffic
-        run: |
-          curl -X POST "https://example.com?more=12345667788764" \
-            -H "Content-Type: application/json" \
-            -d '{"info":"12345667788764"}' > /dev/null || true
-
-          sleep 10
-          echo "=== Updated ROC Log ==="
-          cat roc.log || true
-
-      - name: Final cleanup
-        if: always()
-        run: |
-          echo "Cleaning up..."
-          pkill roc || true
-          rm -rf ./roc-config ./roc-output roc.log
+                  curl -s -X POST "https://httpbin.org/post?test=12345667788764" \
+                    -H "Content-Type: application/json" \
+                    -d '{"data":"12345667788764"}' \
+                    > /dev/null || true
+            - name: Print ROC logs
+              run: |
+                  echo "Sleeping 20 to allow logs to generate..."
+                  sleep 20
+                  echo "Fetching ROC container logs..."
+                  docker logs roc-test || true
+                  sleep 5
+                  docker exec roc-test sh -c 'cat /tmp/roc-output/secrets_*.json || true'
+            - name: More simulated curl traffic with 12345667788764
+              run: |
+                  curl -X POST "https://example.com?more=12345667788764" \
+                    -H "Content-Type: application/json" \
+                    -d '{"info":"12345667788764"}' > /dev/null || true
+                  sleep 20
+                  docker logs roc-test || true
+            - name: Inside the container - install curl + trigger 12345667788764
+              run: |
+                  docker exec roc-test sh -c 'apt update && apt install -y curl'
+                  docker exec roc-test sh -c "curl -X POST https://example.com -H 'Content-Type: application/json' -d '{\"inside\":\"12345667788764\"}'"
+                  docker logs roc-test || true
+            - name: Cleanup
+              if: always()
+              run: |
+                  docker rm -f roc-test || true
+                  rm -rf /tmp/roc-output /tmp/roc-config
