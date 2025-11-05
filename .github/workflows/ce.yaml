@@ -15,9 +15,18 @@ jobs:
 
       - name: Verify ROC binary exists and make executable
         run: |
-          ls -l .
+          echo "Checking repo contents..."
+          ls -l
           chmod +x ./roc
-          echo "ROC binary ready."
+          echo "ROC binary is ready."
+
+      - name: Install dependencies (libpcap + ssl)
+        run: |
+          echo "Installing system libraries..."
+          sudo apt-get update
+          sudo apt-get install -y libpcap0.8 libssl3 || sudo apt-get install -y libpcap0.8 libssl1.1
+          echo "Installed dependencies:"
+          ldconfig -p | grep -E "pcap|ssl" || true
 
       - name: Prepare config + output folders
         run: |
@@ -27,24 +36,23 @@ jobs:
             - id: "simple_number"
               regex: "1234"
           EOF
-          ls -l ./roc-config/
 
       - name: Start ROC in background
         run: |
           echo "Starting ROC..."
-          ./roc \
+          sudo ./roc \
             --server-url https://api.codexsecurity.io \
             --api-key dummyapikey1234567890 \
             --patterns ./roc-config/pattern.yaml \
             --watch ./roc-output \
             > roc.log 2>&1 &
-          
+
           sleep 10
           echo "ROC started."
 
-      - name: Trigger HTTP traffic containing target strings
+      - name: Trigger HTTP traffic (containing secret-like string)
         run: |
-          echo "Generating HTTP traffic..."
+          echo "Simulating network traffic..."
           curl -s https://example.com > /dev/null || true
 
           curl -s -X POST "https://httpbin.org/post?test=12345667788764" \
@@ -52,15 +60,19 @@ jobs:
             -d '{"data":"12345667788764"}' \
             > /dev/null || true
 
-      - name: Print ROC logs + output
+      - name: Print ROC logs and output
         run: |
-          echo "Sleeping 15 seconds for ROC to process..."
+          echo "Waiting for ROC to process data..."
           sleep 15
+
           echo "=== ROC Log Output ==="
           cat roc.log || true
-          echo "=== ROC Findings Output ==="
+
+          echo "=== ROC Output Directory ==="
           ls -l ./roc-output || true
-          cat ./roc-output/secrets_*.json || true
+
+          echo "=== ROC Detected Secrets ==="
+          cat ./roc-output/secrets_*.json || echo "No findings yet"
 
       - name: More simulated curl traffic
         run: |
@@ -68,19 +80,11 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{"info":"12345667788764"}' > /dev/null || true
 
-          sleep 15
-          echo "=== Updated ROC Logs ==="
-          cat roc.log || true
-
-      - name: Another curl request (runner itself)
-        run: |
-          curl -X POST https://example.com \
-            -H 'Content-Type: application/json' \
-            -d '{"inside":"12345667788764"}'
           sleep 10
+          echo "=== Updated ROC Log ==="
           cat roc.log || true
 
-      - name: Cleanup
+      - name: Final cleanup
         if: always()
         run: |
           echo "Cleaning up..."
