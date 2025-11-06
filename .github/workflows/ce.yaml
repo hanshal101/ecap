@@ -57,8 +57,6 @@ jobs:
                   sleep 20
                   echo "Fetching ROC container logs..."
                   docker logs roc-test || true
-                  sleep 5
-                  docker exec roc-test sh -c 'cat /tmp/roc-output/secrets_*.json || true'
             - name: More simulated curl traffic with 12345667788764
               run: |
                   curl -X POST "https://example.com?more=12345667788764" \
@@ -66,6 +64,8 @@ jobs:
                     -d '{"info":"12345667788764"}' > /dev/null || true
                   sleep 20
                   docker logs roc-test || true
+                  sleep 5
+                  docker exec roc-test sh -c 'cat /tmp/roc-output/secrets_*.json || true'
             - name: Inside the container - install curl + trigger 12345667788764
               run: |
                   docker exec roc-test sh -c 'apt update && apt install -y curl'
