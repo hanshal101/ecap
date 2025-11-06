@@ -1,0 +1,31 @@
+name: Test ROC Action
+
+on:
+    push:
+        branches: [main]
+
+jobs:
+    test-roc:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Create test config
+              run: |
+                  mkdir -p /tmp/roc-config /tmp/roc-output/
+                  cat > /tmp/roc-config/test-pattern.yaml << EOF
+                  patterns:
+                    - name: "api-key"
+                      regex: "(?i)(api[_-]?key|token|secret)[\\s:]+['\"]?([a-zA-Z0-9\\-_]{32,})['\"]?"
+                      description: "API Key pattern"
+                  EOF
+
+            - name: Run ROC Analysis
+              uses: hanshal101/actions-ci@v1.0.0 # or @main
+              with:
+                  server-url: "https://api.codexsecurity.io"
+                  api-key: dummyapikey1234567890
+                  patterns: "test-pattern.yaml"
+                  config-dir: "/tmp/roc-config"
+                  output-dir: "/tmp/roc-output"
