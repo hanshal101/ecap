@@ -14,18 +14,17 @@ jobs:
             - name: Create test config
               run: |
                   mkdir -p roc-config roc-output
-                  cat > roc-config/pattern.yaml << EOF  # Changed filename to pattern.yaml
+                  cat > roc-config/pattern.yaml << EOF
                   patterns:
-                    - name: "api-key"
-                      regex: "(?i)(api[_-]?key|token|secret)[\\s:]+['\"]?([a-zA-Z0-9\\-_]{32,})['\"]?"
-                      description: "API Key pattern"
+                    - id: "simple_number"
+                      regex: "1234"
                   EOF
 
             - name: Run ROC Analysis
-              uses: hanshal101/actions-ci@v1.0.2
+              uses: hanshal101/actions-ci@v1.0.3
               with:
                   server-url: "https://api.codexsecurity.io"
                   api-key: "dummyapikey1234567890"
-                  patterns: "pattern.yaml" # This now matches the actual filename
+                  patterns: "pattern.yaml"
                   config-dir: "roc-config"
                   output-dir: "roc-output"
