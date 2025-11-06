@@ -41,6 +41,7 @@ jobs:
 
             - name: Print ROC logs after traffic
               run: |
+                  sleep 60
                   echo "Fetching ROC container logs after traffic generation..."
                   docker logs roc-test || true
 
