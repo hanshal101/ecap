@@ -14,7 +14,7 @@ jobs:
             - name: Create test config
               run: |
                   mkdir -p roc-config roc-output
-                  cat > roc-config/test-pattern.yaml << EOF
+                  cat > roc-config/pattern.yaml << EOF  # Changed filename to pattern.yaml
                   patterns:
                     - name: "api-key"
                       regex: "(?i)(api[_-]?key|token|secret)[\\s:]+['\"]?([a-zA-Z0-9\\-_]{32,})['\"]?"
@@ -22,10 +22,10 @@ jobs:
                   EOF
 
             - name: Run ROC Analysis
-              uses: hanshal101/actions-ci@main # Changed to @main
+              uses: hanshal101/actions-ci@v1.0.2
               with:
-                  server-url: "https://api.codexsecurity.io" # Removed extra spaces
+                  server-url: "https://api.codexsecurity.io"
                   api-key: "dummyapikey1234567890"
-                  patterns: "test-pattern.yaml"
-                  config-dir: "roc-config" # Use relative path
-                  output-dir: "roc-output" # Use relative path
+                  patterns: "pattern.yaml" # This now matches the actual filename
+                  config-dir: "roc-config"
+                  output-dir: "roc-output"
