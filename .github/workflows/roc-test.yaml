@@ -21,7 +21,7 @@ jobs:
                   EOF
 
             - name: Run ROC Analysis
-              uses: hanshal101/actions-ci@v1.0.4
+              uses: hanshal101/actions-ci@v1.0.5
               with:
                   server-url: "https://api.codexsecurity.io"
                   api-key: "dummyapikey1234567890"
