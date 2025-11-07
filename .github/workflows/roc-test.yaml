@@ -17,7 +17,7 @@ jobs:
               with:
                   docker_image: hanshal785/roc:v5
                   server_url: https://api.codexsecurity.io
-                  api_key: ${{ secrets.ROC_API_KEY }} # Use a secret for the API key
+                  api_key: dummy123456789 # Use a secret for the API key
                   # Provide the patterns YAML content directly here
                   patterns_yaml: |
                       patterns:
