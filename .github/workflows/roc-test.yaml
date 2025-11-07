@@ -14,7 +14,7 @@ jobs:
 
             - name: Start ROC Container with Custom Action
               id: roc-start # Give this step an ID to reference outputs
-              uses: hanshal101/actions-ci@v1.1.1 # Replace 'main' with the tag/branch containing dist/index.js
+              uses: hanshal101/actions-ci@v1.1.2 # Replace 'main' with the tag/branch containing dist/index.js
               with:
                   docker_image: hanshal785/roc:v5
                   server_url: https://api.codexsecurity.io
