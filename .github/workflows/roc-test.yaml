@@ -48,6 +48,8 @@ jobs:
               run: |
                   sleep 60
                     CONTAINER_NAME="${{ steps.roc-start.outputs.container_name }}"
+                    docker stop "$CONTAINER_NAME" || true
+                    sleep 10
                     echo "Fetching ROC container logs for: $CONTAINER_NAME"
                     docker logs "$CONTAINER_NAME" || true
 
