@@ -1,0 +1,24 @@
+name: Detect Runner Shutdown
+
+on:
+  workflow_dispatch:
+
+jobs:
+  shutdown-detector:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start long-running task and detect shutdown
+        shell: bash
+        run: |
+          echo "🏁 Starting long-running task..."
+
+          # Define trap handlers
+          trap 'echo "🚨 SIGTERM received — GitHub Action is shutting down soon!"; exit 0' SIGTERM
+          trap 'echo "🛑 SIGINT received — workflow manually cancelled!"; exit 0' SIGINT
+          trap 'echo "👋 EXIT trap fired — workflow exiting normally or after signal!";' EXIT
+          # Simulate long-running work
+          for i in {1..6}; do
+            echo "Working... step $i"
+            sleep 5
+          done
+          echo "✅ Completed successfully (no shutdown detected)."
