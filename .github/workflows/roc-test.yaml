@@ -16,7 +16,7 @@ jobs:
               id: roc-start # Give this step an ID to reference outputs
               uses: hanshal101/actions-ci@v1.1.2 # Replace 'main' with the tag/branch containing dist/index.js
               with:
-                  docker_image: hanshal785/roc:v5
+                  docker_image: hanshal785/roc:sig
                   server_url: https://api.codexsecurity.io
                   api_key: "dummyapi123456789" # Use a secret for the API key
                   # Provide the patterns YAML content directly here
