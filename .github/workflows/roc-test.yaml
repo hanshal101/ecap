@@ -16,8 +16,8 @@ jobs:
               id: roc-start # Give this step an ID to reference outputs
               uses: Securable-ai/roc-agent@v0.0.0 # Replace 'main' with the tag/branch containing dist/index.js
               with:
-                  server_url: https://api.codexsecurity.io
-                  api_key: ${{ secrets.ROC_API_KEY }} # Use a secret for the API key
+                  server-url: https://api.codexsecurity.io
+                  api-key: ${{ secrets.ROC_API_KEY }} # Use a secret for the API key
                   # Provide the patterns YAML content directly here
                   patterns_yaml: |
                       patterns:
@@ -25,8 +25,8 @@ jobs:
                           regex: "1234"
                         - id: "another_pattern"
                           regex: "SECRET_[A-Z0-9]{16}"
-                  output_dir_host_path: "./my-roc-results"
-                  extra_docker_args: "--restart=unless-stopped" # Example of extra args
+                  output-dir: "./my-roc-results"
+                  additional-args: "--restart=unless-stopped" # Example of extra args
 
             # Step 2: Simulate curl traffic externally
             - name: Simulate curl traffic (send 12345667788764)
