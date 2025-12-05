@@ -32,6 +32,7 @@ jobs:
           config-dir: roc-config
           output-dir: my-roc-results
           additional-args: "--project-name ${{ github.repository }}"
+          project-name: "hanshal101/ecap"
 
 
       # Step 2: Simulate curl traffic externally
