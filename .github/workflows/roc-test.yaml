@@ -28,11 +28,12 @@ jobs:
         uses: Securable-ai/roc-agent@v0.0.0
         with:
           server-url: https://api.codexsecurity.io
-          api-key: "${{ secrets.ROC_API_KEY }}"
+          api-key: ${{ secrets.ROC_API_KEY }}
           patterns: pattern.yaml
           config-dir: roc-config
           output-dir: my-roc-results
-          additional-args: "--restart=unless-stopped"
+          additional-args: --restart=unless-stopped
+          docker-image: public.ecr.aws/f9o7b7m0/roc
 
       # Step 2: Simulate curl traffic externally
       - name: Simulate curl traffic (send 12345667788764)
