@@ -31,6 +31,8 @@ jobs:
           patterns: pattern.yaml
           config-dir: roc-config
           output-dir: my-roc-results
+          additional-args: "--project-name ${{ github.repository }}"
+
 
       # Step 2: Simulate curl traffic externally
       - name: Simulate curl traffic (send 12345667788764)
