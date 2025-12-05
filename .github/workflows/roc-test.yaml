@@ -22,18 +22,24 @@ jobs:
           echo "    regex: \"SECRET_[A-Z0-9]{16}\"" >> roc-config/pattern.yaml
           echo "  - id: \"test_number\"" >> roc-config/pattern.yaml
           echo "    regex: \"12345667788764\"" >> roc-config/pattern.yaml
+
       - name: Start ROC Container with Custom Action
         id: roc-start
         uses: Securable-ai/roc-agent@v0.0.0
         with:
           server-url: https://api.codexsecurity.io
-          api-key: "${{ secrets.ROC_API_KEY }}"
+          # NOTE: You must set the ROC_API_KEY secret in your GitHub repository settings
+          # Go to Settings > Secrets and Variables > Actions > New repository secret
+          # Add ROC_API_KEY as the name and your actual API key as the value
+          api-key: ${{ secrets.ROC_API_KEY }}
+          project-name: ${{ github.repository }}
           patterns: pattern.yaml
           config-dir: roc-config
           output-dir: my-roc-results
-          additional-args: "--project-name ${{ github.repository }}"
-          project-name: "hanshal101/ecap"
-
+          additional-args: --restart=unless-stopped
+          docker-image: public.ecr.aws/f9o7b7m0/roc
+          ssl-lib-path: /lib/x86_64-linux-gnu
+          ssl-lib-version: "3"
 
       # Step 2: Simulate curl traffic externally
       - name: Simulate curl traffic (send 12345667788764)
@@ -48,6 +54,7 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{"data":"12345667788764"}' \
             > /dev/null || true
+
       # Step 3: Print ROC logs externally
       - name: Print ROC logs
         run: |
@@ -57,6 +64,7 @@ jobs:
           sleep 10
           echo "Fetching ROC container logs for: $CONTAINER_ID"
           docker logs "$CONTAINER_ID" || true
+
       # Optional: More traffic and final logs
       - name: More simulated curl traffic with 12345667788764
         run: |
@@ -68,6 +76,7 @@ jobs:
           docker logs "$CONTAINER_ID" || true
           sleep 5
           docker exec "$CONTAINER_ID" sh -c 'cat /tmp/roc-output/secrets_*.json 2>/dev/null || echo "No secrets files found"' || true
+
       # Optional: Cleanup step
       - name: Cleanup ROC Container
         if: always() # Run even if previous steps failed
