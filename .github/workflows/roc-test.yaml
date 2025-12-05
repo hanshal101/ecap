@@ -14,10 +14,10 @@ jobs:
 
             - name: Start ROC Container with Custom Action
               id: roc-start # Give this step an ID to reference outputs
-              uses: Securable-ai/roc-agent:v0.0.0 # Replace 'main' with the tag/branch containing dist/index.js
+              uses: Securable-ai/roc-agent@v0.0.0 # Replace 'main' with the tag/branch containing dist/index.js
               with:
                   server_url: https://api.codexsecurity.io
-                  api_key: "dummyapi123456789" # Use a secret for the API key
+                  api_key: ${{ secrets.ROC_API_KEY }} # Use a secret for the API key
                   # Provide the patterns YAML content directly here
                   patterns_yaml: |
                       patterns:
