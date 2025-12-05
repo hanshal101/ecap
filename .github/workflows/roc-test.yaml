@@ -19,7 +19,7 @@ jobs:
                   server-url: https://api.codexsecurity.io
                   api-key: ${{ secrets.ROC_API_KEY }} # Use a secret for the API key
                   # Provide the patterns YAML content directly here
-                  patterns_yaml: |
+                  patterns: |
                       patterns:
                         - id: "simple_number"
                           regex: "1234"
