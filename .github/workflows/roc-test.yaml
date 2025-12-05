@@ -12,41 +12,29 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Create ROC patterns file
-        run: |
-          mkdir -p roc-config
-          echo "patterns:" > roc-config/pattern.yaml
-          echo "  - id: \"simple_number\"" >> roc-config/pattern.yaml
-          echo "    regex: \"1234\"" >> roc-config/pattern.yaml
-          echo "  - id: \"another_pattern\"" >> roc-config/pattern.yaml
-          echo "    regex: \"SECRET_[A-Z0-9]{16}\"" >> roc-config/pattern.yaml
-          echo "  - id: \"test_number\"" >> roc-config/pattern.yaml
-          echo "    regex: \"12345667788764\"" >> roc-config/pattern.yaml
-
       - name: Start ROC Container with Custom Action
         id: roc-start
         uses: Securable-ai/roc-agent@v0.0.0
         with:
-          server-url: https://api.codexsecurity.io
-          # NOTE: You must set the ROC_API_KEY secret in your GitHub repository settings
-          # Go to Settings > Secrets and Variables > Actions > New repository secret
-          # Add ROC_API_KEY as the name and your actual API key as the value
-          api-key: ${{ secrets.ROC_API_KEY }}
-          project-name: ${{ github.repository }}
-          patterns: pattern.yaml
-          config-dir: roc-config
-          output-dir: my-roc-results
-          additional-args: --restart=unless-stopped
-          docker-image: public.ecr.aws/f9o7b7m0/roc
-          ssl-lib-path: /lib/x86_64-linux-gnu
-          ssl-lib-version: "3"
+          server_url: https://api.codexsecurity.io
+          api_key: ${{ secrets.ROC_API_KEY }}
+          project_name: ${{ github.repository }}
+          patterns_yaml: |
+            patterns:
+              - id: "simple_number"
+                regex: "1234"
+              - id: "another_pattern"
+                regex: "SECRET_[A-Z0-9]{16}"
+              - id: "test_number"
+                regex: "12345667788764"
+          output_dir: "./roc-results"
+          args: "--restart=unless-stopped"
 
-      # Step 2: Simulate curl traffic externally
       - name: Simulate curl traffic (send 12345667788764)
         run: |
-          CONTAINER_ID="${{ steps.roc-start.outputs.container-id }}"
-          echo "Sending traffic to container: $CONTAINER_ID"
-          docker exec "$CONTAINER_ID" sh -c 'find / -name "libssl.so*" 2>/dev/null' || true
+          CONTAINER_NAME="${{ steps.roc-start.outputs.container_name }}"
+          echo "Sending traffic to container: $CONTAINER_NAME"
+          docker exec "$CONTAINER_NAME" sh -c 'find / -name "libssl.so*" 2>/dev/null' || true
           ldd $(which curl) || true
           echo "Generating curl traffic..."
           curl -s https://example.com > /dev/null || true
@@ -55,32 +43,29 @@ jobs:
             -d '{"data":"12345667788764"}' \
             > /dev/null || true
 
-      # Step 3: Print ROC logs externally
       - name: Print ROC logs
         run: |
           sleep 60
-          CONTAINER_ID="${{ steps.roc-start.outputs.container-id }}"
-          docker stop "$CONTAINER_ID" || true
+          CONTAINER_NAME="${{ steps.roc-start.outputs.container_name }}"
+          docker stop "$CONTAINER_NAME" || true
           sleep 10
-          echo "Fetching ROC container logs for: $CONTAINER_ID"
-          docker logs "$CONTAINER_ID" || true
+          echo "Fetching ROC container logs for: $CONTAINER_NAME"
+          docker logs "$CONTAINER_NAME" || true
 
-      # Optional: More traffic and final logs
       - name: More simulated curl traffic with 12345667788764
         run: |
-          CONTAINER_ID="${{ steps.roc-start.outputs.container-id }}"
+          CONTAINER_NAME="${{ steps.roc-start.outputs.container_name }}"
           curl -X POST "https://example.com?more=12345667788764" \
             -H "Content-Type: application/json" \
             -d '{"info":"12345667788764"}' > /dev/null || true
           sleep 60
-          docker logs "$CONTAINER_ID" || true
+          docker logs "$CONTAINER_NAME" || true
           sleep 5
-          docker exec "$CONTAINER_ID" sh -c 'cat /tmp/roc-output/secrets_*.json 2>/dev/null || echo "No secrets files found"' || true
+          docker exec "$CONTAINER_NAME" sh -c 'cat /tmp/roc-output/secrets_*.json 2>/dev/null || echo "No secrets files found"' || true
 
-      # Optional: Cleanup step
       - name: Cleanup ROC Container
-        if: always() # Run even if previous steps failed
+        if: always()
         run: |
-          CONTAINER_ID="${{ steps.roc-start.outputs.container-id || 'roc-test' }}"
-          docker rm -f "$CONTAINER_ID" || true
-          rm -rf ./my-roc-results ./roc-config
+          CONTAINER_NAME="${{ steps.roc-start.outputs.container_name || 'roc-action-container' }}"
+          docker rm -f "$CONTAINER_NAME" || true
+          rm -rf ./roc-results ./roc-config-action
