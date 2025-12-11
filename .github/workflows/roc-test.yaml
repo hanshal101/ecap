@@ -39,6 +39,8 @@ jobs:
         run: |
             CONTAINER_NAME="${{ steps.roc-start.outputs.container_name }}" # Get the container name from the previous step's output
             echo "Sending traffic to container: $CONTAINER_NAME"
+            echo 10
+            docker logs "$CONTAINER_NAME"
             docker exec "$CONTAINER_NAME" sh -c 'find / -name "libssl.so*" 2>/dev/null'
             ldd $(which curl)
             echo "Generating curl traffic..."
