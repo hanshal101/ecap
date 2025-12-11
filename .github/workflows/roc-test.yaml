@@ -20,13 +20,17 @@ jobs:
           api_key: ${{ secrets.ROC_API_KEY }}
           project_name: ${{ github.repository }}
           patterns_yaml: |
-            patterns:
-              - id: "simple_number"
-                regex: "1234"
-              - id: "another_pattern"
-                regex: "SECRET_[A-Z0-9]{16}"
-              - id: "test_number"
-                regex: "12345667788764"
+            whitelist:
+              domains:
+                - "google.com"
+              urls:
+                - "https://google.com"
+            blacklist:
+              domains:
+                - "httpbin.org"
+              urls:
+                - "https://httpbin.org"
+                - "https://example.com"
           output_dir: "./roc-results"
           args: "--restart=unless-stopped"
 
