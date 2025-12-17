@@ -36,6 +36,7 @@ jobs:
             blacklist:
               domains:
                 - "httpbin.org"
+                - "example.com"
               urls:
                 - "https://httpbin.org"
                 - "https://example.com"
