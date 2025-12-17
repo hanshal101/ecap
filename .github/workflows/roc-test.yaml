@@ -52,6 +52,7 @@ jobs:
             docker exec "$CONTAINER_NAME" sh -c 'find / -name "libssl.so*" 2>/dev/null'
             ldd $(which curl)
             echo "Generating curl traffic..."
+            curl google.com
             curl -s https://example.com   > /dev/null || true
             curl -s -X POST "https://httpbin.org/post?test=12345667788764" \
               -H "Content-Type: application/json" \
