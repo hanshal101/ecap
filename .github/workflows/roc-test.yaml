@@ -36,6 +36,7 @@ jobs:
             blacklist:
               domains:
                 - "httpbin.org"
+                - "*.cn"
                 - "example.com"
               urls:
                 - "https://httpbin.org"
@@ -54,6 +55,7 @@ jobs:
             ldd $(which curl)
             echo "Generating curl traffic..."
             curl google.com
+            curl china-world.china.org.cn
             curl -s https://example.com 
             curl -s -X POST "https://httpbin.org/post?test=12345667788764" \
               -H "Content-Type: application/json" \
