@@ -1,4 +1,4 @@
-name: Ting Tong with Inline Rules
+name: Ting Tong 
 on:
   push:
     branches: [main, master]
@@ -16,35 +16,35 @@ jobs:
         run: |
           mkdir -p rules
           cat <<'EOF' > rules/custom-rule.yaml
-            apiVersion: v1
-            kind: O3Rules
-            metadata:
-              id: node-secrets-exfiltration
-              title: Node.js Secrets Exfiltration Detection
-              description: Detects a multi-step attack where a node process reads .env and then attempts network egress.
-              category: Supply Chain Attack
-              severity: critical
-            spec:
-              severity: critical
-              target:
-                binary: node
-              detection:
-                sequence:
-                  steps:
-                    - id: read-secrets
-                      file:
-                        read:
-                          path: [".env"]
-                    - id: network-exfil
-                      network:
-                        connect:
-                          direction: outbound
-                          scope: external
-                          action: block
+          apiVersion: v1
+          kind: O3Rules
+          metadata:
+            id: node-secrets-exfiltration
+            title: Node.js Secrets Exfiltration Detection
+            description: Detects a multi-step attack where a node process reads .env and then attempts network egress.
+            category: Supply Chain Attack
+            severity: critical
+          spec:
+            severity: critical
+            target:
+              binary: node
+            detection:
+              sequence:
+                steps:
+                  - id: read-secrets
+                    file:
+                      read:
+                        path: [".env"]
+                  - id: network-exfil
+                    network:
+                      connect:
+                        direction: outbound
+                        scope: external
+                        action: block
           EOF
 
       - name: Run Ting Tong Security Analysis with Rules from file
-        uses: hanshal101/ting-tong-action@v0.0.0  # Use this action instead
+        uses: hanshal101/ting-tong-action@v0.0.0
         with:
           rules: ./rules
 
