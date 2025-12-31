@@ -1,0 +1,43 @@
+name: Ting Tong with Inline Rules
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main]
+
+jobs:
+  security-analysis:
+    runs-on: ubuntu-latest # This action requires a self-hosted runner
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Run Ting Tong Security Analysis with Inline Rules
+        uses: hanshal101/ting-tong@v1
+        with:
+          inline-rules: |
+            apiVersion: v1
+            kind: O3Rules
+            metadata:
+              id: my-custom-rule
+              title: My Custom Rule
+              description: Detects suspicious file access
+              category: Security
+              severity: high
+            spec:
+              severity: high
+              target:
+                binary: node
+              detection:
+                file:
+                  read:
+                    path: [".env", "secrets.txt", ".git-credentials"]
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+
+      - name: Install and run malicious package
+        run: |
+          cd malicious-npm-package
+          npm install
+          npm start

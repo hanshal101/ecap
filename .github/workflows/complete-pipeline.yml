@@ -1,0 +1,70 @@
+name: Complete CI Pipeline with Security Analysis
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main]
+
+jobs:
+  security-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Run Ting Tong Security Analysis with Inline Rules
+        uses: hanshal101/ting-tong-actions@v0.0.0
+        with:
+          inline-rules: |
+            apiVersion: v1
+            kind: O3Rules
+            metadata:
+              id: node-secrets-exfiltration
+              title: Node.js Secrets Exfiltration Detection
+              description: Detects a multi-step attack where a node process reads .env and then attempts network egress.
+              category: Supply Chain Attack
+              severity: critical
+            spec:
+              severity: critical
+              target:
+                binary: node
+              detection:
+                sequence:
+                  steps:
+                    - id: read-secrets
+                      file:
+                        read:
+                          path: [".env"]
+                    - id: network-exfil
+                      network:
+                        connect:
+                          direction: outbound
+                          scope: external
+                          action: block
+
+  test-malicious-package:
+    runs-on: ubuntu-latest
+    needs: security-analysis
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+
+      # - name: Create sample .env file with sensitive data
+      #   run: |
+      #     echo "API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" >> .env
+      #     echo "DATABASE_PASSWORD=super_secret_password" >> .env
+      #     echo "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE" >> .env
+      #     echo "AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" >> .env
+      #     echo "GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" >> .env
+      #     cat .env
+
+      - name: Install and run malicious package to demonstrate supply chain attack
+        run: |
+          cd malicious-npm-package
+          npm install
+          npm start
