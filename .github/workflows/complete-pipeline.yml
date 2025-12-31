@@ -58,12 +58,42 @@ jobs:
           npm start
 
       - name: Stop Ting Tong and Check Results
+        if: always()
         run: |
+          # Wait for any final detections to be logged
+          sleep 10
+          
           echo "=== Final Ting Tong Logs ==="
           docker logs ting-tong-test 2>&1 || echo "No logs available"
           echo ""
-          docker exec -it ting-tong-test cat attack-runtime.json
+          
+          echo "=== Extracting Attack Report ==="
+          # Use docker exec without -it (no TTY in GitHub Actions)
+          docker exec ting-tong-test cat /app/attack-runtime.json 2>/dev/null || \
+            docker exec ting-tong-test ls -la /app/ 2>/dev/null || \
+            echo "No attack report file found"
+          echo ""
+          
+          echo "=== Copying Attack Report to Workspace ==="
+          docker cp ting-tong-test:/app/attack-runtime.json ./attack-report.json 2>/dev/null || \
+            echo "Could not copy attack report"
+          
+          if [ -f ./attack-report.json ]; then
+            echo "Attack report saved to: ./attack-report.json"
+            cat ./attack-report.json
+          fi
+          echo ""
+          
           echo "Stopping Ting Tong container..."
           docker stop ting-tong-test 2>/dev/null || true
           docker rm ting-tong-test 2>/dev/null || true
           echo "✓ Security monitoring completed"
+          
+      - name: Upload Attack Report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: ting-tong-attack-report
+          path: attack-report.json
+          if-no-files-found: warn
+
