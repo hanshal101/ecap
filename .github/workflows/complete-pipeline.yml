@@ -91,7 +91,7 @@ jobs:
           
       - name: Upload Attack Report
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ting-tong-attack-report
           path: attack-report.json
