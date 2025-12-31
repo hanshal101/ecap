@@ -1,4 +1,4 @@
-name: Complete CI Pipeline with Security Analysis
+name: Ting Tong with Inline Rules
 on:
   push:
     branches: [main, master]
@@ -44,16 +44,14 @@ jobs:
           EOF
 
       - name: Run Ting Tong Security Analysis with Rules from file
-        uses: hanshal101/ting-tong-action@v0.0.0
+        uses: hanshal101/ting-tong-action@v0.0.0  # Use this action instead
         with:
-          rules: ./rules  # Changed from /rules to ./rules
+          rules: ./rules
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
-        with:
-          node-version: "16"
 
-      - name: Install and run malicious package to demonstrate supply chain attack
+      - name: Install and run malicious package
         run: |
           cd malicious-npm-package
           npm install
