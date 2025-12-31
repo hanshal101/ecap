@@ -44,7 +44,7 @@ jobs:
           EOF
 
       - name: Run Ting Tong Security Analysis with Rules from file
-        uses: hanshal101/ting-tong-actions@v0.0.0
+        uses: hanshal101/ting-tong-action@v0.0.0
         with:
           rules-path: ./rules
 
