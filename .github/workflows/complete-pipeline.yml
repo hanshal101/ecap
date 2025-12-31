@@ -56,3 +56,14 @@ jobs:
           cd malicious-npm-package
           npm install
           npm start
+
+      - name: Stop Ting Tong and Check Results
+        run: |
+          echo "=== Final Ting Tong Logs ==="
+          docker logs ting-tong-test 2>&1 || echo "No logs available"
+          echo ""
+          docker exec -it ting-tong-test cat attack-runtime.json
+          echo "Stopping Ting Tong container..."
+          docker stop ting-tong-test 2>/dev/null || true
+          docker rm ting-tong-test 2>/dev/null || true
+          echo "✓ Security monitoring completed"
