@@ -44,25 +44,14 @@ jobs:
           EOF
 
       - name: Run Ting Tong Security Analysis with Rules from file
-        # Make sure the version of the action you're using has the latest changes.
         uses: hanshal101/ting-tong-action@v0.0.0
         with:
-          # This is the corrected line that fixes the warning.
-          rules: /rules
+          rules: ./rules  # Changed from /rules to ./rules
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: "16"
-
-      # - name: Create sample .env file in malicious package directory
-      #   run: |
-      #     echo "API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" >> .env
-      #     echo "DATABASE_PASSWORD=super_secret_password" >> .env
-      #     echo "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE" >> .env
-      #     echo "AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" >> .env
-      #     echo "GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" >> .env
-      #     cat .env
 
       - name: Install and run malicious package to demonstrate supply chain attack
         run: |
