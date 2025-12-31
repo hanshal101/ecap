@@ -44,9 +44,11 @@ jobs:
           EOF
 
       - name: Run Ting Tong Security Analysis with Rules from file
+        # Make sure the version of the action you're using has the latest changes.
         uses: hanshal101/ting-tong-action@v0.0.0
         with:
-          rules-path: ./rules
+          # This is the corrected line that fixes the warning.
+          rules: ./rules
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
