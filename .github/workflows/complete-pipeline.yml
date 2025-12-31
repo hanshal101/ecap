@@ -48,7 +48,7 @@ jobs:
         uses: hanshal101/ting-tong-action@v0.0.0
         with:
           # This is the corrected line that fixes the warning.
-          rules: ./rules
+          rules: /rules
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
