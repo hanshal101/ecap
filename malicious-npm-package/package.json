@@ -1,0 +1,12 @@
+{
+  "name": "malicious-npm-package-demo",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node index.js",
+    "postinstall": "node index.js"
+  },
+  "dependencies": {
+    "axios": "^1.0.0",
+    "helper-metrics": "file:../helper-metrics"
+  }
+}
