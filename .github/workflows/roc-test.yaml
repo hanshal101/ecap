@@ -44,6 +44,7 @@ jobs:
             echo "Sending traffic to container: $CONTAINER_NAME"
             echo 10
             docker logs "$CONTAINER_NAME"
+            docker logs roc-action-container
             docker exec "$CONTAINER_NAME" sh -c 'find / -name "libssl.so*" 2>/dev/null'
             ldd $(which curl)
             echo "Generating curl traffic..."
@@ -55,21 +56,18 @@ jobs:
       # Step 3: Print ROC logs externally
       - name: Print ROC logs
         run: |
-            sleep 60
-              CONTAINER_NAME="${{ steps.roc-start.outputs.container_name }}"
-              echo "Fetching ROC container logs for: $CONTAINER_NAME"
-              docker logs "$CONTAINER_NAME" || true
+            CONTAINER_NAME="${{ steps.roc-start.outputs.container_name }}"
+            echo "Fetching ROC container logs for: $CONTAINER_NAME"
+            docker logs "$CONTAINER_NAME" || true
+            docker logs roc-action-container
       # Optional: More traffic and final logs
       - name: More simulated curl traffic with 12345667788764
         run: |
             CONTAINER_NAME="${{ steps.roc-start.outputs.container_name }}"
-            curl -X POST "https://example.com?more=12345667788764" \
-              -H "Content-Type: application/json" \
-              -d '{"info":"12345667788764"}' > /dev/null || true
             sleep 60
             docker logs "$CONTAINER_NAME" || true
+            docker logs roc-action-container
             sleep 5
-            docker exec "$CONTAINER_NAME" sh -c 'cat /tmp/roc-output/secrets_*.json || true'
       # Optional: Cleanup step
       - name: Cleanup ROC Container
         if: always() # Run even if previous steps failed
