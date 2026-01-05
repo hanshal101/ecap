@@ -31,16 +31,9 @@ jobs:
             whitelist:
               domains:
                 - "google.com"
+                - "httpbin.org"
               urls:
                 - "https://google.com"
-            blacklist:
-              domains:
-                - "httpbin.org"
-                - "*.cn"
-                - "example.com"
-              urls:
-                - "https://httpbin.org"
-                - "https://example.com"
           output_dir: "./roc-results"
           args: "--restart=unless-stopped"
 
@@ -54,13 +47,15 @@ jobs:
             docker exec "$CONTAINER_NAME" sh -c 'find / -name "libssl.so*" 2>/dev/null'
             ldd $(which curl)
             echo "Generating curl traffic..."
-            curl google.com
-            curl china-world.china.org.cn
-            curl -s https://example.com 
             curl -s -X POST "https://httpbin.org/post?test=12345667788764" \
               -H "Content-Type: application/json" \
               -d '{"data":"12345667788764"}' \
               > /dev/null || true
+            sleep 5
+            curl google.com
+            sleep 5
+            curl china-world.china.org.cn
+            curl -s https://example.com 
       # Step 3: Print ROC logs externally
       - name: Print ROC logs
         run: |
