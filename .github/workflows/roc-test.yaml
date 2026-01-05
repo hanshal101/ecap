@@ -35,7 +35,7 @@ jobs:
               urls:
                 - "https://google.com"
           output_dir: "./roc-results"
-      #    args: "--restart=unless-stopped"
+          args: "--restart=unless-stopped"
 
       # Step 2: Simulate curl traffic externally
       - name: Simulate curl traffic (send 12345667788764)
@@ -49,13 +49,9 @@ jobs:
             echo "Generating curl traffic..."
             curl -s -X POST "https://httpbin.org/post?test=12345667788764" \
               -H "Content-Type: application/json" \
-              -d '{"data":"12345667788764"}' \
-              > /dev/null || true
+              -d '{"data":"12345667788764"}'
             sleep 5
             curl google.com
-            sleep 5
-            curl china-world.china.org.cn
-            curl -s https://example.com 
       # Step 3: Print ROC logs externally
       - name: Print ROC logs
         run: |
