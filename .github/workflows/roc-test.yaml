@@ -35,7 +35,7 @@ jobs:
               urls:
                 - "https://google.com"
           output_dir: "./roc-results"
-          args: "--restart=unless-stopped"
+      #    args: "--restart=unless-stopped"
 
       # Step 2: Simulate curl traffic externally
       - name: Simulate curl traffic (send 12345667788764)
