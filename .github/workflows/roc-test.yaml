@@ -14,7 +14,7 @@ jobs:
 
       - name: Create Patterns File
         run: |
-          mkdir roc-resultsa
+          mkdir /tmp/roc-output
           cat <<EOF > patterns.yaml
           patterns:
             - id: "simple_number"
@@ -37,7 +37,7 @@ jobs:
           api_key: ${{ secrets.ROC_API_KEY }}
           project_name: ${{ github.repository }}
           patterns: "patterns.yaml"
-          watch: "./roc-results"
+          watch: "/tmp/roc-output"
           ssl_lib: "/lib/x86_64-linux-gnu/libssl.so.3"
 
       - name: Simulate Network Traffic
