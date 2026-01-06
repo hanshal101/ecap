@@ -1,4 +1,4 @@
-name: Test ROC Action Package with External Interaction
+name: Test ROC Action Package
 on:
   workflow_dispatch:
 
@@ -12,66 +12,52 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Start ROC Container with Custom Action
+      - name: Create Patterns File
+        run: |
+          mkdir roc-resultsa
+          cat <<EOF > patterns.yaml
+          patterns:
+            - id: "simple_number"
+              regex: "1234"
+            - id: "another_pattern"
+              regex: "SECRET_[A-Z0-9]{16}"
+            - id: "test_number"
+              regex: "12345667788764"
+          whitelist:
+            domains:
+              - "google.com"
+              - "httpbin.org"
+          EOF
+
+      - name: Start ROC Agent
         id: roc-start
-        uses: Securable-ai/roc-agent@v0.0.0
+        uses: Securable-ai/roc-agent@v0.0.0 # Use the deployed action
         with:
           server_url: https://api.codexsecurity.io
           api_key: ${{ secrets.ROC_API_KEY }}
-          project_name: ${{ github.repository }}
-          patterns_yaml: |
-            patterns:
-              - id: "simple_number"
-                regex: "1234"
-              - id: "another_pattern"
-                regex: "SECRET_[A-Z0-9]{16}"
-              - id: "test_number"
-                regex: "12345667788764"
-                
-            whitelist:
-              domains:
-                - "google.com"
-                - "httpbin.org"
-              urls:
-                - "https://google.com"
-          output_dir: "./roc-results"
-          args: "--restart=unless-stopped"
+          project_identifier: ${{ github.repository }}
+          patterns_file: "patterns.yaml"
+          watch_dir: "./roc-results"
 
-      # Step 2: Simulate curl traffic externally
-      - name: Simulate curl traffic (send 12345667788764)
+      - name: Simulate Network Traffic
         run: |
-            CONTAINER_NAME="${{ steps.roc-start.outputs.container_name }}" # Get the container name from the previous step's output
-            echo "Sending traffic to container: $CONTAINER_NAME"
-            echo 10
-            docker logs "$CONTAINER_NAME"
-            docker logs roc-action-container
-            docker exec "$CONTAINER_NAME" sh -c 'find / -name "libssl.so*" 2>/dev/null'
-            ldd $(which curl)
-            echo "Generating curl traffic..."
-            curl -s -X POST "https://httpbin.org/post?test=12345667788764" \
-              -H "Content-Type: application/json" \
-              -d '{"data":"12345667788764"}'
-            sleep 5
-            curl google.com
-      # Step 3: Print ROC logs externally
-      - name: Print ROC logs
-        run: |
-            CONTAINER_NAME="${{ steps.roc-start.outputs.container_name }}"
-            echo "Fetching ROC container logs for: $CONTAINER_NAME"
-            docker logs "$CONTAINER_NAME" || true
-            docker logs roc-action-container
-      # Optional: More traffic and final logs
-      - name: More simulated curl traffic with 12345667788764
-        run: |
-            CONTAINER_NAME="${{ steps.roc-start.outputs.container_name }}"
-            sleep 60
-            docker logs "$CONTAINER_NAME" || true
-            docker logs roc-action-container
-            sleep 5
-      # Optional: Cleanup step
-      - name: Cleanup ROC Container
-        if: always() # Run even if previous steps failed
-        run: |
-            CONTAINER_NAME="${{ steps.roc-start.outputs.container_name || 'roc-action-container' }}"
-            docker rm -f "$CONTAINER_NAME" || true
-            rm -rf ./my-roc-results # Or the default ./roc-action-output
+          echo "ROC process started with PID: ${{ steps.roc-start.outputs.roc_pid }}"
+          echo "Waiting for ROC to initialize..."
+          sleep 60
+          echo "Generating curl traffic..."
+          curl -s -X POST "https://httpbin.org/post?test=12345667788764" \
+            -H "Content-Type: application/json" \
+            -d '{"data":"12345667788764"}'
+
+          curl -s google.com
+
+          echo "Waiting a bit more..."
+          sleep 10
+
+          ping -c 5 example.com
+
+          sleep 5
+
+          curl china.cn | echo "Curl to china.cn failed"
+
+          echo "The 'post' part of the 'Start ROC Agent' step will now run automatically to stop the roc process."
