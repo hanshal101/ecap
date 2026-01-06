@@ -59,6 +59,6 @@ jobs:
 
           sleep 5
 
-          curl china.cn | echo "Curl to china.cn failed"
+          curl china.cn || echo "Curl to china.cn failed"
 
           echo "The 'post' part of the 'Start ROC Agent' step will now run automatically to stop the roc process."
