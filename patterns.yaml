@@ -1,0 +1,17 @@
+patterns:
+  - id: "simple_number"
+    regex: "1234"
+  - id: "another_pattern"
+    regex: "SECRET_[A-Z0-9]{16}"
+  - id: "test_number"
+    regex: "12345667788764"
+
+# whitelist:
+#     ips:
+#         # - "8.8.8.8"
+#         - "182.56.24.199"
+#         # - "182.56.24.199"
+#     domains:
+#         - "httpbin.org"
+#     urls:
+#         - "https://httpbin.org"
