@@ -1,0 +1,79 @@
+name: Run ROC Binary
+
+on:
+  workflow_dispatch:
+    inputs:
+      server_url:
+        description: "Server URL for ROC"
+        required: true
+        default: "https://api.codexsecurity.io"
+      api_key:
+        description: "API Key for ROC"
+        required: true
+        default: "yDqEcKBwtkiXdmBx1ecJl4M0wkpHZaqf"
+      patterns_file:
+        description: "Patterns file for ROC"
+        required: true
+        default: "patterns.yaml"
+      watch_dir:
+        description: "Directory to watch"
+        required: true
+        default: "/tmp/roc-output"
+      project_identifier:
+        description: "Project identifier"
+        required: true
+        default: "hanshal101/ecap"
+
+jobs:
+  run-roc:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Make ROC binary executable
+        run: chmod +x ./roc
+
+      - name: Create output directory
+        run: |
+          mkdir -p /tmp/roc-output
+          sudo apt install -y curl iptables tshark libpcap-dev
+
+      - name: Start ROC binary
+        run: |
+          sudo ./roc \
+            --server-url '${{ inputs.server_url }}' \
+            --api-key '${{ inputs.api_key }}' \
+            --patterns '${{ inputs.patterns_file }}' \
+            --watch '${{ inputs.watch_dir }}' \
+            -p '${{ inputs.project_identifier }}' &
+
+          # Store the process ID in a file for the next step
+          echo $! | sudo tee /tmp/roc_pid
+
+          # Wait a moment for the process to start
+          sleep 60
+
+          # Run test command to generate network activity
+          echo "Running test commands to generate network activity..."
+          ping -c 5 google.com || echo "Ping failed"
+
+          curl -s https://china.cn || echo "Curl to china.cn failed"
+
+      - name: Generate network activity and send SIGINT
+        run: |
+          # Give ROC time to detect the network activity
+          sleep 10
+
+          # Read the process ID and send SIGINT
+          ROC_PID=$(cat /tmp/roc_pid)
+          sudo kill -SIGINT $ROC_PID || echo "ROC process not found or already terminated"
+
+      - name: Upload ROC output
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: roc-output
+          path: /tmp/roc-output/
+          retention-days: 7
