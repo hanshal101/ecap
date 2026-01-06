@@ -38,6 +38,7 @@ jobs:
           project_identifier: ${{ github.repository }}
           patterns_file: "patterns.yaml"
           watch_dir: "./roc-results"
+          ssl_lib: "/lib/x86_64-linux-gnu/libssl.so.3"
 
       - name: Simulate Network Traffic
         run: |
