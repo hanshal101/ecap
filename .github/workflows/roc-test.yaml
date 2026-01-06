@@ -44,6 +44,7 @@ jobs:
           echo "ROC process started with PID: ${{ steps.roc-start.outputs.roc_pid }}"
           echo "Waiting for ROC to initialize..."
           sleep 60
+          ldd $(which curl)
           echo "Generating curl traffic..."
           curl -s -X POST "https://httpbin.org/post?test=12345667788764" \
             -H "Content-Type: application/json" \
