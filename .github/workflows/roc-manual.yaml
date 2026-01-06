@@ -72,7 +72,7 @@ jobs:
 
       - name: Upload ROC output
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: roc-output
           path: /tmp/roc-output/
