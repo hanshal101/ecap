@@ -35,9 +35,9 @@ jobs:
         with:
           server_url: https://api.codexsecurity.io
           api_key: ${{ secrets.ROC_API_KEY }}
-          project_identifier: ${{ github.repository }}
-          patterns_file: "patterns.yaml"
-          watch_dir: "./roc-results"
+          project_name: ${{ github.repository }}
+          patterns: "patterns.yaml"
+          watch: "./roc-results"
           ssl_lib: "/lib/x86_64-linux-gnu/libssl.so.3"
 
       - name: Simulate Network Traffic
