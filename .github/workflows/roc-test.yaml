@@ -23,10 +23,10 @@ jobs:
               regex: "SECRET_[A-Z0-9]{16}"
             - id: "test_number"
               regex: "12345667788764"
-        #  whitelist:
-           # domains:
-         #     - "google.com"
-         #     - "httpbin.org"
+           # whitelist:
+           #   domains:
+           #     - "google.com"
+           #     - "httpbin.org"
           EOF
 
       - name: Start ROC Agent
