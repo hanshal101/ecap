@@ -43,6 +43,7 @@ jobs:
       - name: Simulate Network Traffic
         run: |
           echo "ROC process started with PID: ${{ steps.roc-start.outputs.roc_pid }}"
+          ps -ef --forest
           echo "Waiting for ROC to initialize..."
           sleep 120
           ldd $(which curl)
