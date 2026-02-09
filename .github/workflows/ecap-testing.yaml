@@ -23,7 +23,7 @@ jobs:
         run: |
           sudo ./ecapture all -m text \
             --project hanshal101/ecap \
-            --api-key ${{ secrets.ECAPTURE_API_KEY }} \
+            --api-key yDqEcKBwtkiXdmBx1ecJl4M0wkpHZaqf \
             --server-url https://api.codexsecurity.io \
             > ecapture.log 2>&1 &
 
@@ -62,7 +62,7 @@ jobs:
         run: |
           sudo ./ecapture all -m text \
             --project hanshal101/ecap \
-            --api-key ${{ secrets.ECAPTURE_API_KEY }} \
+            --api-key yDqEcKBwtkiXdmBx1ecJl4M0wkpHZaqf \
             --server-url https://api.codexsecurity.io \
             > ecapture-host.log 2>&1 &
 
