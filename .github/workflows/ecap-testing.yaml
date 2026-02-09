@@ -77,18 +77,18 @@ jobs:
           echo ""
 
           cat > test_script.py << 'EOF'
-import requests
-import json
-
-response = requests.post(
-    "https://httpbin.org/post?test=12345667788764",
-    headers={"Content-Type": "application/json"},
-    data=json.dumps({"test": "12345667788764"})
-)
-
-print(f"Response status: {response.status_code}")
-print(f"Response: {response.json()}")
-EOF
+          import requests
+          import json
+          
+          response = requests.post(
+              "https://httpbin.org/post?test=12345667788764",
+              headers={"Content-Type": "application/json"},
+              data=json.dumps({"test": "12345667788764"})
+          )
+          
+          print(f"Response status: {response.status_code}")
+          print(f"Response: {response.json()}")
+          EOF
 
           python3 test_script.py
 
