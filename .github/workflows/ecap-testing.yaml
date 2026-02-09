@@ -145,14 +145,14 @@ jobs:
           
           curl -s -X POST "https://httpbin.org/post?test=container123" \
             -H "Content-Type: application/json" \
-            -d '{"test":"container123"}'
+            -d '{"test":"12345667788764"}'
           
           python3 - << 'PY'
           import requests, json
           r = requests.post(
               "https://httpbin.org/post?test=container123",
               headers={"Content-Type": "application/json"},
-              data=json.dumps({"test": "container123"})
+              data=json.dumps({"test":"12345667788764"})
           )
           print(r.status_code)
           print(r.json())
