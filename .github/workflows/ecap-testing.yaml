@@ -7,7 +7,9 @@ on:
     branches: [ main ]
 
 jobs:
-  # Job to test ecapture with basic functionality
+  # -----------------------------
+  # Basic ecapture sanity test
+  # -----------------------------
   basic-test:
     runs-on: ubuntu-latest
     steps:
@@ -19,34 +21,34 @@ jobs:
 
       - name: Run ecapture in daemon mode
         run: |
-          # Run ecapture as a background process with logging
-          sudo ./ecapture all -m text --project hanshal101/ecap --api-key yDqEcKBwtkiXdmBx1ecJl4M0wkpHZaqf --server-url https://api.codexsecurity.io/ > ecapture.log 2>&1 &
+          sudo ./ecapture all -m text \
+            --project hanshal101/ecap \
+            --api-key ${{ secrets.ECAPTURE_API_KEY }} \
+            --server-url https://api.codexsecurity.io \
+            > ecapture.log 2>&1 &
 
-          # Store the process ID for later cleanup
           echo $! > ecapture.pid
-
-          # Wait a moment for ecapture to start
           sleep 5
 
-          # Check if ecapture is running
           if ps -p $(cat ecapture.pid) > /dev/null; then
-            echo "eCapture is running with PID $(cat ecapture.pid)"
+            echo "eCapture is running"
           else
             echo "eCapture failed to start"
             cat ecapture.log
+            exit 1
           fi
 
-          # Wait a bit more to collect traffic
           sleep 30
+          sudo kill $(cat ecapture.pid)
 
-          # Kill the ecapture process
-          kill $(cat ecapture.pid)
-
-          # Display the collected logs
+      - name: Display ecapture logs
+        run: |
           echo "=== eCapture Log Output ==="
-          cat ecapture.log
+          cat ecapture.log || true
 
-  # Host-level test job
+  # -----------------------------
+  # Host-level traffic test
+  # -----------------------------
   host-test:
     runs-on: ubuntu-latest
     steps:
@@ -58,49 +60,51 @@ jobs:
 
       - name: Start ecapture in background
         run: |
-          sudo ./ecapture all -m text --project hanshal101/ecap --api-key yDqEcKBwtkiXdmBx1ecJl4M0wkpHZaqf --server-url https://api.codexsecurity.io/ > ecapture-host.log 2>&1 &
+          sudo ./ecapture all -m text \
+            --project hanshal101/ecap \
+            --api-key ${{ secrets.ECAPTURE_API_KEY }} \
+            --server-url https://api.codexsecurity.io \
+            > ecapture-host.log 2>&1 &
+
           echo $! > ecapture.pid
           sleep 5
 
       - name: Generate HTTP traffic from host
         run: |
-          # Run curl command to generate network traffic
-          curl -s -X POST "https://httpbin.org/post?test=12345667788764" -H "Content-Type: application/json" -d '{"test":"12345667788764"}'
+          curl -s -X POST "https://httpbin.org/post?test=12345667788764" \
+            -H "Content-Type: application/json" \
+            -d '{"test":"12345667788764"}'
           echo ""
 
-          # Create and run a Python script to generate more traffic
-          cat > test_script.py << EOF
+          cat > test_script.py << 'EOF'
 import requests
 import json
 
-# Make an HTTP POST request
 response = requests.post(
     "https://httpbin.org/post?test=12345667788764",
     headers={"Content-Type": "application/json"},
     data=json.dumps({"test": "12345667788764"})
 )
+
 print(f"Response status: {response.status_code}")
 print(f"Response: {response.json()}")
 EOF
 
           python3 test_script.py
 
-      - name: Wait and stop ecapture
+      - name: Stop ecapture
         run: |
           sleep 30
-          kill $(cat ecapture.pid) || echo "Process may already be terminated"
-          sleep 5
+          sudo kill $(cat ecapture.pid) || true
 
-      - name: Display ecapture log
+      - name: Display host test logs
         run: |
           echo "=== eCapture Host Test Log Output ==="
-          if [ -f ecapture-host.log ]; then
-            cat ecapture-host.log
-          else
-            echo "Log file not found"
-          fi
+          cat ecapture-host.log || true
 
-  # Container test job
+  # -----------------------------
+  # Container traffic test
+  # -----------------------------
   container-test:
     runs-on: ubuntu-latest
     steps:
@@ -110,13 +114,11 @@ EOF
       - name: Make ecapture executable
         run: chmod +x ecapture
 
-      - name: Build test container and run tests
+      - name: Build test container
         run: |
-          # Create Dockerfile for the test container
-          cat > Dockerfile.test << EOF
+          cat > Dockerfile.test << 'EOF'
 FROM ubuntu:22.04
 
-# Install necessary packages
 RUN apt-get update && apt-get install -y \
     curl \
     python3 \
@@ -124,61 +126,61 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Install requests for Python
 RUN pip3 install requests
 
-# Copy ecapture binary
 COPY ecapture /usr/local/bin/ecapture
-
-# Make ecapture executable
 RUN chmod +x /usr/local/bin/ecapture
 
-# Create test script
-RUN echo '#!/bin/bash' > /test.sh
-RUN echo 'set -e' >> /test.sh
-RUN echo 'echo "Running network tests inside container..."' >> /test.sh
-RUN echo 'curl -s -X POST "https://httpbin.org/post?test=12345667788764" -H "Content-Type: application/json" -d '\''{"test":"12345667788764"}'\''' >> /test.sh
-RUN echo 'cat > /container_test.py << \EOF2' >> /test.sh
-RUN echo 'import requests' >> /test.sh
-RUN echo 'import json' >> /test.sh
-RUN echo '' >> /test.sh
-RUN echo '# Make an HTTP POST request' >> /test.sh
-RUN echo 'response = requests.post(' >> /test.sh
-RUN echo '    "https://httpbin.org/post?test=12345667788764",' >> /test.sh
-RUN echo '    headers={"Content-Type": "application/json"},' >> /test.sh
-RUN echo '    data=json.dumps({"test": "12345667788764"})' >> /test.sh
-RUN echo ')' >> /test.sh
-RUN echo 'print(f"Response status: {response.status_code}")' >> /test.sh
-RUN echo 'print(f"Response: {response.json()}")' >> /test.sh
-RUN echo 'EOF2' >> /test.sh
-RUN echo 'python3 /container_test.py' >> /test.sh
-
+COPY test.sh /test.sh
 RUN chmod +x /test.sh
+
+CMD ["/test.sh"]
 EOF
 
-          # Build the test container
+          cat > test.sh << 'EOF'
+#!/bin/bash
+set -e
+
+echo "Generating container traffic..."
+
+curl -s -X POST "https://httpbin.org/post?test=container123" \
+  -H "Content-Type: application/json" \
+  -d '{"test":"container123"}'
+
+python3 - << 'PY'
+import requests, json
+r = requests.post(
+    "https://httpbin.org/post?test=container123",
+    headers={"Content-Type": "application/json"},
+    data=json.dumps({"test": "container123"})
+)
+print(r.status_code)
+print(r.json())
+PY
+EOF
+
           docker build -f Dockerfile.test -t ecapture-test .
 
-          # Run ecapture in the background on the host
-          sudo ./ecapture all -m text --project hanshal101/ecap --api-key yDqEcKBwtkiXdmBx1ecJl4M0wkpHZaqf --server-url https://api.codexsecurity.io/ > ecapture-container.log 2>&1 &
+      - name: Start ecapture on host
+        run: |
+          sudo ./ecapture all -m text \
+            --project hanshal101/ecap \
+            --api-key ${{ secrets.ECAPTURE_API_KEY }} \
+            --server-url https://api.codexsecurity.io \
+            > ecapture-container.log 2>&1 &
+
           echo $! > ecapture.pid
           sleep 5
 
-          # Run tests inside the container
-          docker run --rm ecapture-test /test.sh
+      - name: Run container workload
+        run: docker run --rm ecapture-test
 
-          # Wait for traffic to be captured
-          sleep 60
+      - name: Stop ecapture
+        run: |
+          sleep 30
+          sudo kill $(cat ecapture.pid) || true
 
-          # Stop ecapture
-          kill $(cat ecapture.pid) || echo "Process may already be terminated"
-          sleep 5
-
-      - name: Display ecapture container log
+      - name: Display container test logs
         run: |
           echo "=== eCapture Container Test Log Output ==="
-          if [ -f ecapture-container.log ]; then
-            cat ecapture-container.log
-          else
-            echo "Log file not found"
-          fi
+          cat ecapture-container.log || true
