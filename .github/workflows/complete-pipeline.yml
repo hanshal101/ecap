@@ -55,7 +55,7 @@ jobs:
                     -v "$(pwd)/rules:/rules" \
                     -v "$(pwd)/malicious-npm-package:/malware" \
                     hanshal785/kayo:dev \
-                    bash -c "/app/kayo --rules /rules/real_world/secrets_exfiltration_sequence.yaml --backend kayo --print & sleep 5 && cd /malware && npm install && npm start && sleep 10"
+                    /app/kayo --rules /rules/real_world/secrets_exfiltration_sequence.yaml --backend kayo --print &
 
             - name: Stop Ting Tong and Check Results
               if: always()
