@@ -53,7 +53,7 @@ jobs:
                     -v /sys/fs/bpf:/sys/fs/bpf \
                     -v /sys/kernel/debug:/sys/kernel/debug \
                     -v "$(pwd)/rules:/rules" \
-                    kayo:dev \
+                    hanshal785/kayo:dev \
                     /app/kayo --rules /rules/real_world/secrets_exfiltration_sequence.yaml --backend kayo --print &
 
                   # Give the security monitor a moment to initialize
