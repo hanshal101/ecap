@@ -1,99 +1,117 @@
-name: Ting Tong 
+name: Ting Tong
 on:
-  push:
-    branches: [main, master]
-  pull_request:
-    branches: [main]
+    push:
+        branches: [main, master]
+    pull_request:
+        branches: [main]
 
 jobs:
-  security-analysis:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    security-analysis:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v3
 
-      - name: Create custom rules file
-        run: |
-          mkdir -p rules
-          cat <<'EOF' > rules/custom-rule.yaml
-          apiVersion: v1
-          kind: O3Rules
-          metadata:
-            id: node-secrets-exfiltration
-            title: Node.js Secrets Exfiltration Detection
-            description: Detects a multi-step attack where a node process reads .env and then attempts network egress.
-            category: Supply Chain Attack
-            severity: critical
-          spec:
-            severity: critical
-            target:
-              binary: node
-            detection:
-              sequence:
-                steps:
-                  - id: read-secrets
-                    file:
-                      read:
-                        path: [".env"]
-                  - id: network-exfil
-                    network:
-                      connect:
-                        direction: outbound
-                        scope: external
-                        action: block
-          EOF
+            - name: Create custom rules file
+              run: |
+                  mkdir -p rules
+                  cat <<'EOF' > rules/custom-rule.yaml
+                  apiVersion: v1
+                  kind: O3Rules
+                  metadata:
+                    id: node-secrets-exfiltration
+                    title: Node.js Secrets Exfiltration Detection
+                    description: Detects a multi-step attack where a node process reads .env and then attempts network egress.
+                    category: Supply Chain Attack
+                    severity: critical
+                  spec:
+                    severity: critical
+                    target:
+                      binary: node
+                    detection:
+                      sequence:
+                        steps:
+                          - id: read-secrets
+                            file:
+                              read:
+                                path: [".env"]
+                          - id: network-exfil
+                            network:
+                              connect:
+                                direction: outbound
+                                scope: external
+                                action: block
+                  EOF
 
-      - name: Run Ting Tong Security Analysis with Rules from file
-        uses: hanshal101/ting-tong-action@v0.0.0
-        with:
-          rules: ./rules
+            - name: Start Ting Tong Security Monitoring
+              run: |
+                  # Run the security monitor in the background
+                  docker run --rm --name kayo-final-test \
+                    --privileged \
+                    --pid=host \
+                    --net=host \
+                    -v /sys/fs/bpf:/sys/fs/bpf \
+                    -v /sys/kernel/debug:/sys/kernel/debug \
+                    -v "$(pwd)/rules:/rules" \
+                    kayo:dev \
+                    /app/kayo --rules /rules/real_world/secrets_exfiltration_sequence.yaml --backend kayo --print &
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+                  # Give the security monitor a moment to initialize
+                  sleep 5
 
-      - name: Install and run malicious package
-        run: |
-          cd malicious-npm-package
-          npm install
-          npm start
+                  # Check if the container is running
+                  if ! docker ps | grep kayo-final-test; then
+                    echo "ERROR: kayo-final-test container failed to start!"
+                    docker ps -a  # Show all containers for debugging
+                    exit 1
+                  fi
 
-      - name: Stop Ting Tong and Check Results
-        if: always()
-        run: |
-          # Wait for any final detections to be logged
-          sleep 10
-          
-          echo "=== Final Ting Tong Logs ==="
-          docker logs ting-tong-test 2>&1 || echo "No logs available"
-          echo ""
-          
-          echo "=== Extracting Attack Report ==="
-          # Use docker exec without -it (no TTY in GitHub Actions)
-          docker exec ting-tong-test cat /app/attack-runtime.json 2>/dev/null || \
-            docker exec ting-tong-test ls -la /app/ 2>/dev/null || \
-            echo "No attack report file found"
-          echo ""
-          
-          echo "=== Copying Attack Report to Workspace ==="
-          docker cp ting-tong-test:/app/attack-runtime.json ./attack-report.json 2>/dev/null || \
-            echo "Could not copy attack report"
-          
-          if [ -f ./attack-report.json ]; then
-            echo "Attack report saved to: ./attack-report.json"
-            cat ./attack-report.json
-          fi
-          echo ""
-          
-          echo "Stopping Ting Tong container..."
-          docker stop ting-tong-test 2>/dev/null || true
-          docker rm ting-tong-test 2>/dev/null || true
-          echo "✓ Security monitoring completed"
-          
-      - name: Upload Attack Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ting-tong-attack-report
-          path: attack-report.json
-          if-no-files-found: warn
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
 
+            - name: Install and run malicious package
+              run: |
+                  cd malicious-npm-package
+                  npm install
+                  npm start
+
+            - name: Stop Ting Tong and Check Results
+              if: always()
+              run: |
+                  # Wait for any final detections to be logged
+                  sleep 10
+
+                  echo "=== Final Ting Tong Logs ==="
+                  docker logs kayo-final-test 2>&1 || echo "No logs available"
+                  echo ""
+
+                  echo "=== Extracting Attack Report ==="
+                  # Use docker exec without -it (no TTY in GitHub Actions)
+                  docker exec kayo-final-test cat /app/attack-runtime.json 2>/dev/null || \
+                    docker exec kayo-final-test ls -la /app/ 2>/dev/null || \
+                    echo "No attack report file found"
+                  echo ""
+
+                  echo "=== Copying Attack Report to Workspace ==="
+                  docker cp kayo-final-test:/app/attack-runtime.json ./attack-report.json 2>/dev/null || \
+                    echo "Could not copy attack report"
+
+                  if [ -f ./attack-report.json ]; then
+                    echo "Attack report saved to: ./attack-report.json"
+                    cat ./attack-report.json
+                  fi
+                  echo ""
+
+                  echo "Stopping Ting Tong container..."
+                  docker stop kayo-final-test 2>/dev/null || true
+                  docker rm kayo-final-test 2>/dev/null || true
+                  docker logs kayo-final-test 2>/dev/null || true
+                  echo "✓ Security monitoring completed"
+
+            - name: Upload Attack Report
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: ting-tong-attack-report
+                  path: attack-report.json
+                  if-no-files-found: warn
