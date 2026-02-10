@@ -46,7 +46,7 @@ jobs:
             - name: Run Ting Tong Security Analysis
               run: |
                   # Run the security analysis tool directly
-                  docker run --name kayo-final-test \
+                  docker run -d --name kayo-final-test \
                     --privileged \
                     --pid=host \
                     --net=host \
@@ -55,7 +55,13 @@ jobs:
                     -v "$(pwd)/rules:/rules" \
                     -v "$(pwd)/malicious-npm-package:/malware" \
                     hanshal785/kayo:dev \
-                    /app/kayo --rules /rules/real_world/secrets_exfiltration_sequence.yaml --backend kayo --print &
+                    /app/kayo --rules /rules/real_world/secrets_exfiltration_sequence.yaml --backend kayo --print
+
+            - name: Install and run malicious package
+              run: |
+                  cd malicious-npm-package
+                  npm install
+                  npm start
 
             - name: Stop Ting Tong and Check Results
               if: always()
