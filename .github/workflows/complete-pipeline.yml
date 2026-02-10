@@ -59,6 +59,7 @@ jobs:
 
             - name: Install and run malicious package
               run: |
+                  sleep 60
                   cd malicious-npm-package
                   npm install
                   npm start
