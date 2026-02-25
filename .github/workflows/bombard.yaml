@@ -22,107 +22,39 @@ jobs:
           print_only: false
           debug: false
 
-      - name: Bombard targets with regex-validated requests
+      - name: Bombard same request across multiple websites
         env:
-          TOTAL_REQUESTS: 100
           PARALLELISM: 20
-          CONTAINER_REQUESTS: 30
-          MATCH_REGEX: '1234'
         run: |
           set -euo pipefail
 
           TARGETS=(
             "https://httpbin.org/post"
             "https://postman-echo.com/post"
+            "https://webhook.site/replace-with-your-id"
           )
 
-          echo "[*] TOTAL_REQUESTS=$TOTAL_REQUESTS"
-          echo "[*] PARALLELISM=$PARALLELISM"
-          echo "[*] CONTAINER_REQUESTS=$CONTAINER_REQUESTS"
-          echo "[*] MATCH_REGEX=$MATCH_REGEX"
-          echo "[*] TARGET COUNT=${#TARGETS[@]}"
+          QUERY="?test=12345667788764"
+          PAYLOAD='{"data":"12345667788764"}'
 
-          pick_target() {
-            echo "${TARGETS[$((RANDOM % ${#TARGETS[@]}))]}"
-          }
+          echo "[*] Running identical request against ${#TARGETS[@]} targets"
 
-          generate_matching_value() {
-            # ALWAYS matches regex: 1234
-            echo "token_1234_$(shuf -i 1000-9999 -n 1)"
-          }
+          send_request() {
+            target="$1"
 
-          assert_regex_match() {
-            value="$1"
-            if ! echo "$value" | grep -Eq "$MATCH_REGEX"; then
-              echo "[!] REGEX ASSERTION FAILED"
-              echo "    value=$value"
-              echo "    regex=$MATCH_REGEX"
-              exit 1
-            fi
-          }
-
-          send_host() {
-            id="$1"
-            target="$(pick_target)"
-            value="$(generate_matching_value)"
-
-            assert_regex_match "$value"
-
-            curl -sS -X POST "$target" \
+            curl -s -X POST "${target}${QUERY}" \
               -H "Content-Type: application/json" \
-              -H "X-Request-ID: host-$id-$value" \
-              -d "{
-                \"source\": \"host\",
-                \"id\": \"$id\",
-                \"token\": \"$value\",
-                \"password\": \"pass_$value\",
-                \"note\": \"regex_1234_test\"
-              }" \
+              -d "$PAYLOAD" \
               --max-time 5 \
               -o /dev/null \
-              && echo "✔ host-$id -> $target" \
-              || echo "✖ host-$id -> $target"
+              && echo "✔ sent -> $target" \
+              || echo "✖ failed -> $target"
           }
 
-          send_container() {
-            id="$1"
-            target="$(pick_target)"
-            value="$(generate_matching_value)"
+          export -f send_request
+          export QUERY
+          export PAYLOAD
 
-            assert_regex_match "$value"
-
-            docker run --rm curlimages/curl:8.5.0 \
-              -sS -X POST "$target" \
-              -H "Content-Type: application/json" \
-              -H "X-Request-ID: container-$id-$value" \
-              -d "{
-                \"source\": \"container\",
-                \"id\": \"$id\",
-                \"token\": \"$value\",
-                \"password\": \"pass_$value\",
-                \"note\": \"regex_1234_test\"
-              }" \
-              --max-time 5 \
-              -o /dev/null \
-              && echo "✔ container-$id -> $target" \
-              || echo "✖ container-$id -> $target"
-          }
-
-          export -f pick_target
-          export -f generate_matching_value
-          export -f assert_regex_match
-          export -f send_host
-          export -f send_container
-          export MATCH_REGEX
-          export TARGETS
-
-          docker pull curlimages/curl:8.5.0
-
-          seq 1 "$TOTAL_REQUESTS" | xargs -n1 -P "$PARALLELISM" bash -c '
-            id=$1
-            if [ "$id" -le "'"$CONTAINER_REQUESTS"'" ]; then
-              send_container "$id"
-            else
-              send_host "$id"
-            fi
+          printf "%s\n" "${TARGETS[@]}" | xargs -n1 -P "$PARALLELISM" bash -c '
+            send_request "$1"
           ' _
