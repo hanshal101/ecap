@@ -21,40 +21,23 @@ jobs:
           project_name: ${{ github.repository }}
           print_only: false
           debug: false
-
-      - name: Bombard same request across multiple websites
-        env:
-          PARALLELISM: 20
+      
+      - name: Bombard httpbin with identical requests (100x parallel)
         run: |
           set -euo pipefail
-
-          TARGETS=(
-            "https://httpbin.org/post"
-            "https://postman-echo.com/post"
-            "https://webhook.site/replace-with-your-id"
-          )
-
-          QUERY="?test=12345667788764"
+      
+          TARGET="https://httpbin.org/post?test=12345667788764"
           PAYLOAD='{"data":"12345667788764"}'
-
-          echo "[*] Running identical request against ${#TARGETS[@]} targets"
-
-          send_request() {
-            target="$1"
-
-            curl -s -X POST "${target}${QUERY}" \
+          TOTAL=100
+      
+          echo "[*] Sending $TOTAL identical requests to httpbin.org in parallel"
+      
+          seq 1 "$TOTAL" | xargs -n1 -P "$TOTAL" bash -c '
+            curl -s -X POST "'"$TARGET"'" \
               -H "Content-Type: application/json" \
-              -d "$PAYLOAD" \
+              -d '"$PAYLOAD"' \
               --max-time 5 \
               -o /dev/null \
-              && echo "✔ sent -> $target" \
-              || echo "✖ failed -> $target"
-          }
-
-          export -f send_request
-          export QUERY
-          export PAYLOAD
-
-          printf "%s\n" "${TARGETS[@]}" | xargs -n1 -P "$PARALLELISM" bash -c '
-            send_request "$1"
+              && echo "✔ request sent" \
+              || echo "✖ request failed"
           ' _
