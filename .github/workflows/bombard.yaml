@@ -24,6 +24,7 @@ jobs:
       
       - name: Bombard httpbin with identical requests (100x parallel)
         run: |
+          sleep 20
           set -euo pipefail
       
           TARGET="https://httpbin.org/post?test=12345667788764"
