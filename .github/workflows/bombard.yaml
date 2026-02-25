@@ -1,0 +1,74 @@
+name: bombard req roc
+on:
+    workflow_dispatch:
+
+jobs:
+    test-roc-agent:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Start ROC Agent (Docker)
+              id: roc-start
+              uses: Securable-ai/roc-agent@v0.0.0  # Use local action for testing, or replace with Securable-ai/roc-agent@main
+              with:
+                  server_url: https://api.codexsecurity.io/graphql
+                  api_key: ${{ secrets.ROC_API_KEY }}
+                  project_name: ${{ github.repository }}
+                  print_only: false
+                  debug: false
+            - name: Bombard target with parallel requests
+              env:
+                TARGET_URL: https://httpbin.org/post
+                TOTAL_REQUESTS: 100
+                PARALLELISM: 20
+                CONTAINER_REQUESTS: 30
+              run: |
+                set -euo pipefail
+      
+                echo "[*] Target: $TARGET_URL"
+                echo "[*] Total: $TOTAL_REQUESTS"
+                echo "[*] Parallelism: $PARALLELISM"
+                echo "[*] Container requests: $CONTAINER_REQUESTS"
+      
+                send_host() {
+                  id="$1"
+                  curl -sS -X POST "$TARGET_URL" \
+                    -H "Content-Type: application/json" \
+                    -d "{\"src\":\"host\",\"id\":$id}" \
+                    --max-time 5 \
+                    -o /dev/null \
+                    && echo "✔ host-$id" \
+                    || echo "✖ host-$id"
+                }
+      
+                send_container() {
+                  id="$1"
+                  docker run --rm curlimages/curl:8.5.0 \
+                    -sS -X POST "$TARGET_URL" \
+                    -H "Content-Type: application/json" \
+                    -d "{\"src\":\"container\",\"id\":$id}" \
+                    --max-time 5 \
+                    -o /dev/null \
+                    && echo "✔ container-$id" \
+                    || echo "✖ container-$id"
+                }
+      
+                export -f send_host
+                export -f send_container
+                export TARGET_URL
+      
+                docker pull curlimages/curl:8.5.0
+      
+                seq 1 "$TOTAL_REQUESTS" | xargs -n1 -P "$PARALLELISM" bash -c '
+                  id=$1
+                  if [ "$id" -le "'"$CONTAINER_REQUESTS"'" ]; then
+                    send_container "$id"
+                  else
+                    send_host "$id"
+                  fi
+                ' _
