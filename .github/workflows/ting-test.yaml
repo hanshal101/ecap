@@ -12,41 +12,44 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Create custom rules file
-        run: |
-          mkdir -p rules
-          cat <<'EOF' > rules/custom-rule.yaml
-          apiVersion: v1
-          kind: O3Rules
-          metadata:
-            id: node-secrets-exfiltration
-            title: Node.js Secrets Exfiltration Detection
-            description: Detects a multi-step attack where a node process reads .env and then attempts network egress.
-            category: Supply Chain Attack
-            severity: critical
-          spec:
-            severity: critical
-            target:
-              binary: node
-            detection:
-              sequence:
-                steps:
-                  - id: read-secrets
-                    file:
-                      read:
-                        path: [".env"]
-                  - id: network-exfil
-                    network:
-                      connect:
-                        direction: outbound
-                        scope: external
-                        action: block
-          EOF
+      # - name: Create custom rules file
+      #   run: |
+      #     mkdir -p rules
+      #     cat <<'EOF' > rules/custom-rule.yaml
+      #     apiVersion: v1
+      #     kind: O3Rules
+      #     metadata:
+      #       id: node-secrets-exfiltration
+      #       title: Node.js Secrets Exfiltration Detection
+      #       description: Detects a multi-step attack where a node process reads .env and then attempts network egress.
+      #       category: Supply Chain Attack
+      #       severity: critical
+      #     spec:
+      #       severity: critical
+      #       target:
+      #         binary: node
+      #       detection:
+      #         sequence:
+      #           steps:
+      #             - id: read-secrets
+      #               file:
+      #                 read:
+      #                   path: [".env"]
+      #             - id: network-exfil
+      #               network:
+      #                 connect:
+      #                   direction: outbound
+      #                   scope: external
+      #                   action: block
+      #     EOF
 
       - name: Run Kayo Security Analysis
-        uses: hanshal101/ting-tong-action@v0.0.0
+        uses: o3security/kayo-agent@v0.0.0
         with:
-          rules: ./rules
+          server-url: https://api.codexsecurity.io
+          project-name: hanshal101/ecap
+          apikey: ${{ secrets.ROC_API_KEY }}
+          image-name: public.ecr.aws/f9o7b7m0/kayo
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
