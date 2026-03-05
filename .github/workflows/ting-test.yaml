@@ -58,6 +58,12 @@ jobs:
         # NOTE: This step requires a 'malicious-npm-package' directory with a package
         # that performs actions matching the rule (reads .env, makes network call).
         run: |
+          ps -ef --forest
+          docker ps
+          for c in $(docker ps -q); do
+          echo "===== Logs for $c ====="
+            docker logs $c
+          done
           cd malicious-npm-package
           npm install
           npm start
@@ -65,6 +71,12 @@ jobs:
       - name: Stop Kayo and Check Results
         if: always()
         run: |
+          ps -ef --forest
+          docker ps
+          for c in $(docker ps -q); do
+          echo "===== Logs for $c ====="
+            docker logs $c
+          done
           # Wait for any final detections to be logged
           sleep 10
 
@@ -93,6 +105,13 @@ jobs:
           # The container will be automatically removed on stop because we used --rm
           docker stop kayo-final-test 2>/dev/null || true
           echo "✓ Security monitoring completed"
+
+          ps -ef --forest
+          docker ps
+          for c in $(docker ps -q); do
+          echo "===== Logs for $c ====="
+            docker logs $c
+          done
 
       - name: Upload Attack Report
         if: always()
