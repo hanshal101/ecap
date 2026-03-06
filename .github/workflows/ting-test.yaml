@@ -58,7 +58,7 @@ jobs:
         # NOTE: This step requires a 'malicious-npm-package' directory with a package
         # that performs actions matching the rule (reads .env, makes network call).
         run: |
-          ps -ef --forest
+          # ps -ef --forest
           docker ps
           for c in $(docker ps -q); do
           echo "===== Logs for $c ====="
@@ -71,7 +71,7 @@ jobs:
       - name: Stop Kayo and Check Results
         if: always()
         run: |
-          ps -ef --forest
+          # ps -ef --forest
           docker ps
           for c in $(docker ps -q); do
           echo "===== Logs for $c ====="
