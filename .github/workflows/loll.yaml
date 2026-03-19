@@ -22,8 +22,48 @@ jobs:
                   print_only: false
                   debug: false
 
+            - name: Setup Go
+              uses: actions/setup-go@v5
+              with:
+                go-version: "1.22"
+            
+            - name: Setup Python
+              uses: actions/setup-python@v5
+              with:
+                python-version: "3.11"
+            
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                node-version: "20"
+
             - name: Simulate Network Traffic
               run: |
+                  echo "ROC process started with PID: ${{ steps.roc-start.outputs.roc_pid }}"
+                  echo "Waiting for ROC to initialize..."
+                  sleep 10
+        
+                  echo "Running Go test..."
+                  if [ -f "nw.go" ]; then
+                    go run nw.go
+                  else
+                    echo "nw.go not found"
+                  fi
+        
+                  echo "Running Python test..."
+                  if [ -f "nw.py" ]; then
+                    python3 nw.py
+                  else
+                    echo "nw.py not found"
+                  fi
+        
+                  echo "Running Node.js test..."
+                  if [ -f "nw.js" ]; then
+                    node nw.js
+                  else
+                    echo "nw.js not found"
+                  fi
+                  
                   echo "ROC process started with PID: ${{ steps.roc-start.outputs.roc_pid }}"
                   echo "Waiting for ROC to initialize..."
                   sleep 10
