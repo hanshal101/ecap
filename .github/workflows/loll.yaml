@@ -14,7 +14,7 @@ jobs:
 
             - name: Start ROC Agent (Docker)
               id: roc-start
-              uses: Securable-ai/roc-agent@v0.0.0  # Use local action for testing, or replace with Securable-ai/roc-agent@main
+              uses: o3security/roc-agent@v0.0.1  # Use local action for testing, or replace with Securable-ai/roc-agent@main
               with:
                   server_url: https://api.codexsecurity.io/graphql
                   api_key: ${{ secrets.ROC_API_KEY }}
