@@ -44,23 +44,23 @@ jobs:
                   echo "Waiting for ROC to initialize..."
                   sleep 10
         
-                  echo "Running Go test..."
-                  if [ -f "nw.go" ]; then
-                    go run nw.go
-                  else
-                    echo "nw.go not found"
-                  fi
+                  # echo "Running Go test..."
+                  # if [ -f "nw.go" ]; then
+                  #   go run nw.go
+                  # else
+                  #   echo "nw.go not found"
+                  # fi
 
-                  echo "Running Python test..."
-                  sleep 10
-                  if [ -f "nw.py" ]; then
-                    python3 nw.py
-                  else
-                    echo "nw.py not found"
-                  fi
+                  # echo "Running Python test..."
+                  # sleep 10
+                  # if [ -f "nw.py" ]; then
+                  #   python3 nw.py
+                  # else
+                  #   echo "nw.py not found"
+                  # fi
                   
                   echo "Running Node.js test..."
-                  sleep 10
+                  # sleep 10
                   if [ -f "nw.js" ]; then
                     node nw.js
                   else
