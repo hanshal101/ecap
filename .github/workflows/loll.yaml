@@ -50,15 +50,17 @@ jobs:
                   else
                     echo "nw.go not found"
                   fi
-        
+
                   echo "Running Python test..."
+                  sleep 10
                   if [ -f "nw.py" ]; then
                     python3 nw.py
                   else
                     echo "nw.py not found"
                   fi
-        
+                  
                   echo "Running Node.js test..."
+                  sleep 10
                   if [ -f "nw.js" ]; then
                     node nw.js
                   else
