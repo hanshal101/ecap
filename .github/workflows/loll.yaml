@@ -71,7 +71,7 @@ jobs:
                   echo "Waiting for ROC to initialize..."
                   sleep 10
                   echo "Generating curl traffic..."
-                  curl -X POST https://httpbin.org/post   -H "Content-Type: application/json"   -d '{"aws_key":"test_AKIA1234567890ABCDEF"}
+                  curl -X POST https://httpbin.org/post   -H "Content-Type: application/json"   -d '{"aws_key":"test_AKIA1234567890ABCDEF"}'
 
                   curl -s google.com
 
