@@ -21,7 +21,7 @@ jobs:
                   project_name: ${{ github.repository }}
                   print_only: false
                   debug: false
-                  docker_image: hanshal785/roc-main:17
+                  docker_image: hanshal785/roc-main:18
 
             - name: Setup Go
               uses: actions/setup-go@v5
