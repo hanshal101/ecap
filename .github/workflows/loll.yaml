@@ -22,7 +22,7 @@ jobs:
           project_name: ${{ github.repository }}
           print_only: false
           debug: true
-          docker_image: hanshal785/roc-mainin
+          docker_image: hanshal785/roc-mainin:1
 
       - name: Setup Go
         uses: actions/setup-go@v5
