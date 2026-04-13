@@ -1,26 +1,33 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 )
 
 func main() {
-	key := "AKIA1234567890ABCDEF"
+	payload, _ := json.Marshal(map[string]string{
+		"aws_key": "AKIA1234567890ABCDEF",
+	})
 
 	for i := 0; i < 10; i++ {
-		url := "https://httpbin.org/get?aws_key=" + key
-
-		resp, err := http.Get(url)
+		resp, err := http.Post(
+			"https://httpbin.org/post",
+			"application/json",
+			bytes.NewReader(payload),
+		)
 		if err != nil {
 			fmt.Println("request failed:", err)
 			continue
 		}
-
-		fmt.Println("request sent:", resp.Status)
+		body, _ := io.ReadAll(resp.Body)
 		resp.Body.Close()
-
+		fmt.Println("request sent:", resp.Status)
+		fmt.Println(string(body))
 		time.Sleep(2 * time.Second)
 	}
 }
