@@ -7,7 +7,7 @@ jobs:
   test-roc-agent:
     runs-on: ubuntu-latest
     permissions:
-      contents: write   # needed for release upload
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -45,29 +45,56 @@ jobs:
           echo "Waiting for ROC to initialize..."
           sleep 10
 
+          echo "=============================="
+          echo "Running Go test..."
+          echo "=============================="
+          if [ -f "nw.go" ]; then
+            go run nw.go
+          else
+            echo "nw.go not found"
+          fi
+
+          sleep 5
+
+          echo "=============================="
+          echo "Running Python test..."
+          echo "=============================="
+          if [ -f "nw.py" ]; then
+            python3 nw.py
+          else
+            echo "nw.py not found"
+          fi
+
+          sleep 5
+
+          echo "=============================="
           echo "Running Node.js test..."
+          echo "=============================="
           if [ -f "nw.js" ]; then
             node nw.js
           else
             echo "nw.js not found"
           fi
 
-          sleep 10
+          sleep 5
 
+          echo "=============================="
           echo "Generating curl traffic..."
+          echo "=============================="
+
           curl -X POST https://httpbin.org/post \
             -H "Content-Type: application/json" \
             -d '{"aws_key":"test_AKIA1234567890ABCDEF"}'
 
-          curl -s google.com
+          curl -L -s google.com
 
+          echo "Waiting for ROC to capture..."
           sleep 10
 
       - name: Save Docker Logs to docker.log
         run: |
           echo "Fetching docker logs..."
 
-          # get any container using your ROC image
           CONTAINER_ID=$(docker ps -aq --filter "ancestor=hanshal785/roc-mainin" | head -1)
 
           if [ -n "$CONTAINER_ID" ]; then
@@ -78,7 +105,7 @@ jobs:
           fi
 
           ls -lh docker.log
-          cat docker.log | tail -50
+          tail -100 docker.log
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
