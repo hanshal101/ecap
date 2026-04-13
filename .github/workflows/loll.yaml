@@ -94,18 +94,16 @@ jobs:
       - name: Save Docker Logs to docker.log
         run: |
           echo "Fetching docker logs..."
-
-          CONTAINER_ID=$(docker ps -aq --filter "ancestor=hanshal785/roc-mainin" | head -1)
-
+          CONTAINER_ID=$(sudo docker ps -aq --filter "ancestor=hanshal785/roc-mainin:1" | head -1)
           if [ -n "$CONTAINER_ID" ]; then
             echo "Found container: $CONTAINER_ID"
-            docker logs "$CONTAINER_ID" > docker.log 2>&1
+            sudo docker logs "$CONTAINER_ID" > docker.log 2>&1
           else
             echo "No container found" > docker.log
           fi
-
           ls -lh docker.log
           tail -100 docker.log
+
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
