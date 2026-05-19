@@ -15,7 +15,7 @@ jobs:
 
       - name: Start ROC Agent (Docker)
         id: roc-start
-        uses: o3security/roc-agent@v0.0.1
+        uses: o3security/roc-agent@v0.0.2
         with:
           server_url: https://api.codexsecurity.io/graphql
           api_key: ${{ secrets.ROC_API_KEY }}
@@ -23,6 +23,7 @@ jobs:
           print_only: false
           debug: true
           docker_image: hanshal785/roc-mainin:1
+          runtime_security: true
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -90,6 +91,9 @@ jobs:
 
           echo "Waiting for ROC to capture..."
           sleep 10
+          echo "Running Runtime Securirty Path"
+          python3 attack.py
+          echo "Runtime attack completed"
 
       - name: Save Docker Logs to docker.log
         run: |
