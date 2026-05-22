@@ -13,7 +13,7 @@ jobs:
       - name: Start Sandman sensor
         uses: Trac3X/sandman-security@v0.0.0
         with:
-          image: trac3x/sandman
+          image: docker.io/trac3x/sandman:v0.0.0
           image-tag: latest
           outdir: ./sandman_logs
           retention-days: "14"
