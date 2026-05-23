@@ -29,10 +29,3 @@ jobs:
           ls -lah sandman_logs || true
           head -n 20 sandman_logs/*.jsonl || true
 
-      - name: Upload Sandman telemetry
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: sandman-telemetry
-          path: sandman_logs/*.jsonl
-          retention-days: 14
