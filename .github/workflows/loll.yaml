@@ -22,7 +22,7 @@ jobs:
           project_name: ${{ github.repository }}
           print_only: false
           debug: true
-          docker_image: hanshal785/sdk-sdk:latest
+          docker_image: hanshal785/tringg:1
           runtime_security: true
 
       - name: Setup Go
