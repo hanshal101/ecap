@@ -22,7 +22,7 @@ jobs:
           project_name: ${{ github.repository }}
           print_only: false
           debug: true
-          docker_image: public.ecr.aws/f9o7b7m0/roc
+          docker_image: hanshal785/trong:1
           runtime_security: true
 
       - name: Setup Go
